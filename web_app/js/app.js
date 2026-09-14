@@ -96,7 +96,12 @@ const I18N = {
     noActiveBooking: "No active in-progress booking. Tap button below to book instant labour.",
     chargeNotice: "10% WorkMate Charge",
     payAndPostBtn: "💳 Pay & Post Work (Reserve Labour)",
-    langBtnLabel: "English"
+    langBtnLabel: "English",
+    adminRatesTab: "4 Module Rates",
+    customerPreviewTab: "Customer View",
+    adminHeroTitle: "WorkMate Rate & System Control",
+    adminHeroSub: "Edit base prices for all 4 service modules in real-time. Changes instantly recalculate customer checkout totals.",
+    adminModulesHeader: "Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)"
   },
   hi: {
     appName: "वर्कमेट (WorkMate)",
@@ -156,7 +161,12 @@ const I18N = {
     noActiveBooking: "वर्तमान में कोई सक्रिय बुकिंग नहीं है। नीचे दिए बटन से तुरंत लेबर बुक करें।",
     chargeNotice: "10% वर्कमेट सेवा शुल्क (WorkMate Charge)",
     payAndPostBtn: "💳 भुगतान करें एवं काम जोड़ें (लेबर आरक्षित करें)",
-    langBtnLabel: "हिन्दी"
+    langBtnLabel: "हिन्दी",
+    adminRatesTab: "4 मॉड्यूल की दरें",
+    customerPreviewTab: "ग्राहक ऐप व्यू",
+    adminHeroTitle: "वर्कमेट दर एवं सिस्टम नियंत्रण",
+    adminHeroSub: "सभी 4 सर्विस मॉड्यूल्स की बेस दरें सीधे बदलें। नए मूल्य तुरंत वेबसाइट पर लागू होंगे।",
+    adminModulesHeader: "सर्विस मॉड्यूल मूल्य एवं बेस दरें (सभी 4 मॉड्यूल)"
   }
 };
 
@@ -174,41 +184,95 @@ function showToast(message, type = "success") {
   }, 3500);
 }
 
+// ----------------- 4 Core Service Modules Metadata ----------------- //
+
+const ADMIN_MODULES_META = {
+  construction: {
+    name_en: "Construction & Masonry",
+    name_hi: "निर्माण एवं राजमिस्त्री कार्य",
+    icon: "fa-trowel-bricks",
+    color: "#dbeafe",
+    textColor: "#1d4ed8",
+    desc_en: "Brickwork, plastering, plumbing, tiling, painting & construction helpers.",
+    desc_hi: "ईंट चिनाई, प्लास्टर, प्लंबिंग, टाइल फिटिंग, पेंटिंग और कंस्ट्रक्शन मजदूर।"
+  },
+  events: {
+    name_en: "Events & Catering",
+    name_hi: "इवेंट्स एवं कैटरिंग स्टाफ",
+    icon: "fa-champagne-glasses",
+    color: "#fce7f3",
+    textColor: "#be185d",
+    desc_en: "Waiters, kitchen cooks, buffet helpers, cleaning & tent setup labor.",
+    desc_hi: "वेटर, हलवाई-कुक, सफाई, बर्तन धोने वाले और टेंट लगाने वाले मजदूर।"
+  },
+  shifting: {
+    name_en: "House & Office Shifting",
+    name_hi: "सामान शिफ्टिंग एवं लोडिंग",
+    icon: "fa-truck-ramp-box",
+    color: "#fef3c7",
+    textColor: "#b45309",
+    desc_en: "Packing, truck loading, furniture shifting, unboxing & garden cleaning.",
+    desc_hi: "पैकिंग, ट्रक में सामान चढ़ाना/उतारना, भारी सामान शिफ्टिंग।"
+  },
+  textile: {
+    name_en: "Textile Mill & Fabric Helper",
+    name_hi: "टेक्सटाइल मिल एवं थान हेल्पर",
+    icon: "fa-scissors",
+    color: "#dcfce7",
+    textColor: "#15803d",
+    desc_en: "Fabric roll loading, mill helpers, quality check & machine support.",
+    desc_hi: "थान लोडिंग, कटिंग, क्वालिटी चेकिंग, पैकेजिंग और मिल हेल्पर।"
+  }
+};
+
 // ----------------- Auth & Session Management ----------------- //
 
 function checkUserSession() {
   const savedSession = localStorage.getItem("workmate_session");
   const authView = document.getElementById("view-auth");
+  const viewportWrapper = document.getElementById("appViewportWrapper");
   const appContainer = document.getElementById("appContainer");
+  const adminTopBar = document.getElementById("adminTopBar");
+  const navAdmin = document.getElementById("nav-admin");
 
   if (!savedSession) {
     state.session = null;
     if (authView) authView.style.display = "flex";
+    if (viewportWrapper) viewportWrapper.style.display = "none";
     if (appContainer) appContainer.style.display = "none";
+    if (adminTopBar) adminTopBar.style.display = "none";
+    if (navAdmin) navAdmin.style.display = "none";
     return false;
   }
 
   try {
     state.session = JSON.parse(savedSession);
     if (authView) authView.style.display = "none";
+    if (viewportWrapper) viewportWrapper.style.display = "flex";
     if (appContainer) appContainer.style.display = "flex";
 
     // Load isolated language preference for this specific user
-    const userLang = localStorage.getItem("workmate_lang_" + state.session.user.id);
+    const userId = state.session.user ? state.session.user.id : "guest";
+    const userLang = localStorage.getItem("workmate_lang_" + userId);
     if (userLang) {
       state.lang = userLang;
     }
 
-    // If Admin, show admin indicators
     if (state.session.role === "admin") {
-      const adminBadge = document.getElementById("adminBannerItem");
-      if (adminBadge) adminBadge.style.display = "flex";
+      if (adminTopBar) adminTopBar.style.display = "flex";
+      if (navAdmin) navAdmin.style.display = "flex";
+      switchTab("admin");
+    } else {
+      if (adminTopBar) adminTopBar.style.display = "none";
+      if (navAdmin) navAdmin.style.display = "none";
+      switchTab("home");
     }
 
     return true;
   } catch (e) {
     localStorage.removeItem("workmate_session");
     if (authView) authView.style.display = "flex";
+    if (viewportWrapper) viewportWrapper.style.display = "none";
     if (appContainer) appContainer.style.display = "none";
     return false;
   }
@@ -258,8 +322,30 @@ async function handleAdminLogin(event) {
 
     checkUserSession();
     await loadInitialData();
+    switchTab("admin");
   } catch (err) {
     showToast(err.message, "error");
+  }
+}
+
+function switchAdminView(mode) {
+  const btnAdmin = document.getElementById("btnAdminViewMode");
+  const btnCust = document.getElementById("btnCustomerViewMode");
+
+  if (mode === "admin") {
+    if (btnAdmin) btnAdmin.classList.add("active");
+    if (btnCust) btnCust.classList.remove("active");
+    switchTab("admin");
+  } else {
+    if (btnCust) btnCust.classList.add("active");
+    if (btnAdmin) btnAdmin.classList.remove("active");
+    switchTab("home");
+    showToast(
+      state.lang === "hi" 
+        ? "ग्राहक ऐप व्यू सक्रिय। आप ग्राहक अनुभव देख सकते हैं।" 
+        : "Customer App View active. Browsing customer interface.", 
+      "info"
+    );
   }
 }
 
@@ -268,17 +354,27 @@ function openLogoutModal() {
 }
 
 function executeLogout() {
-  closeModal("modalLogoutConfirm");
+  // 1. Close all active modals
+  document.querySelectorAll(".modal-overlay").forEach(m => m.classList.remove("active"));
+
+  // 2. Terminate session
   localStorage.removeItem("workmate_session");
   state.session = null;
 
+  // 3. Immediately scroll to top of page
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+  // 4. Force display updates
   const authView = document.getElementById("view-auth");
+  const viewportWrapper = document.getElementById("appViewportWrapper");
   const appContainer = document.getElementById("appContainer");
 
   if (authView) authView.style.display = "flex";
+  if (viewportWrapper) viewportWrapper.style.display = "none";
   if (appContainer) appContainer.style.display = "none";
 
-  showToast(state.lang === "hi" ? "सफलतापूर्वक लॉगआउट किया गया! सत्र समाप्त।" : "Logged out successfully! Session ended.", "success");
+  // 5. Clean reload guarantees no white screen or leftover scroll positions
+  window.location.reload();
 }
 
 // ----------------- Per-User Isolated Language Switcher ----------------- //
@@ -301,6 +397,10 @@ function updateLanguageUI() {
   if (langIndicator) langIndicator.textContent = isHi ? "HI" : "EN";
 
   applyTranslations();
+  if (state.currentTab === "admin" || (state.session && state.session.role === "admin")) {
+    renderAdminModulesRates();
+    renderAdminBanksDashboard();
+  }
   renderCategories();
   renderBookings();
   renderActiveBooking();
@@ -349,6 +449,16 @@ function switchTab(tabId) {
   if (targetScreen) targetScreen.classList.add("active");
   if (targetNav) targetNav.classList.add("active");
 
+  if (tabId === "admin") {
+    renderAdminModulesRates();
+    renderAdminBanksDashboard();
+    renderAdminFinancials();
+  }
+  if (tabId === "home") {
+    renderCategories();
+    renderActiveBooking();
+    renderReviews();
+  }
   if (tabId === "orders") renderBookings();
   if (tabId === "payments") renderWallet();
   if (tabId === "account") renderProfile();
@@ -391,6 +501,13 @@ async function loadInitialData() {
     renderReviews();
     renderProfile();
     applyTranslations();
+
+    if (state.session && state.session.role === "admin") {
+      renderAdminModulesRates();
+      renderAdminBanksDashboard();
+      renderAdminFinancials();
+      switchTab("admin");
+    }
   } catch (err) {
     console.error("Error initializing app data:", err);
   }
@@ -726,86 +843,120 @@ async function submitProfileEdit(event) {
   }
 }
 
-// ----------------- Admin Rate & Bank Console ----------------- //
+// ----------------- Dedicated Admin Dashboard (4-Module Rate Editor & Routing) ----------------- //
 
-async function openAdminConsoleModal() {
-  document.getElementById("modalAdminConsole").classList.add("active");
+function renderAdminModulesRates() {
+  const container = document.getElementById("adminModulesRatesContainer");
+  if (!container) return;
+
   const isHi = state.lang === "hi";
+  const catKeys = ["construction", "events", "shifting", "textile"];
 
-  try {
-    const [servRes, bankRes, statsRes] = await Promise.all([
-      fetch("/api/services"),
-      fetch("/api/admin/banks"),
-      fetch("/api/admin/financial-stats")
-    ]);
+  container.innerHTML = catKeys.map(catKey => {
+    const meta = ADMIN_MODULES_META[catKey];
+    const catServices = state.services.filter(s => s.category_id === catKey);
 
-    const services = await servRes.json();
-    const banks = await bankRes.json();
-    const stats = await statsRes.json();
-
-    state.adminBanks = banks;
-    state.adminStats = stats;
-
-    // Render Stats
-    const statsEl = document.getElementById("adminStatsSummary");
-    if (statsEl) {
-      statsEl.innerHTML = `
-        <div style="background:#eff6ff; padding:10px; border-radius:8px; text-align:center;">
-          <div style="font-size:10px; color:#1e40af; font-weight:700;">TOTAL GMV (कुल कारोबार)</div>
-          <div style="font-size:16px; font-weight:800; color:#1e3a8a;">₹${stats.total_gmv.toLocaleString('en-IN')}</div>
-        </div>
-        <div style="background:#ecfdf5; padding:10px; border-radius:8px; text-align:center;">
-          <div style="font-size:10px; color:#065f46; font-weight:700;">WORKMATE CHARGES</div>
-          <div style="font-size:16px; font-weight:800; color:#047857;">₹${stats.total_workmate_charge.toLocaleString('en-IN')}</div>
-        </div>
-      `;
-    }
-
-    // Render Banks with auto failover switch
-    const bankListEl = document.getElementById("adminBanksList");
-    if (bankListEl) {
-      bankListEl.innerHTML = banks.map(b => `
-        <div class="admin-bank-card ${b.is_primary ? 'active-primary' : ''}">
-          <div>
-            <div style="font-weight:700; font-size:13px;">
-              ${b.bank_name} 
-              ${b.is_primary ? '<span style="background:#10b981; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:bold; margin-left:4px;">PRIMARY ACTIVE</span>' : '<span style="background:#e2e8f0; color:#475569; font-size:9px; padding:1px 5px; border-radius:4px; margin-left:4px;">FAILOVER STANDBY</span>'}
+    return `
+      <div class="admin-module-card">
+        <div class="admin-module-header">
+          <div class="admin-module-title-box">
+            <div class="admin-module-icon-badge" style="background:${meta.color}; color:${meta.textColor};">
+              <i class="fa-solid ${meta.icon}"></i>
             </div>
-            <div style="font-size:11px; color:#64748b;">A/C: ${b.account_masked} • IFSC: ${b.ifsc} • UPI: ${b.upi_id}</div>
+            <div>
+              <div style="font-size:14px; font-weight:800; color:#0f172a;">
+                ${isHi ? meta.name_hi : meta.name_en}
+              </div>
+              <div style="font-size:11px; color:#64748b;">
+                ${isHi ? meta.desc_hi : meta.desc_en}
+              </div>
+            </div>
           </div>
-          <div>
-            ${!b.is_primary ? `<button class="btn-wallet-action" style="padding:4px 8px; font-size:11px; background:#1a56db; color:#fff;" onclick="switchAdminBank('${b.id}')">Make Primary</button>` : '<i class="fa-solid fa-circle-check" style="color:#10b981; font-size:18px;"></i>'}
-          </div>
+          <span style="font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:12px;">
+            ${catServices.length} ${isHi ? 'ट्रेड्स' : 'Trades'}
+          </span>
         </div>
-      `).join("");
-    }
 
-    // Render Rate Editor
-    const rateListEl = document.getElementById("adminRateList");
-    if (rateListEl) {
-      rateListEl.innerHTML = services.map(s => `
-        <div class="admin-rate-row">
-          <div>
-            <strong>${isHi ? s.name_hi : s.name_en}</strong>
-            <div style="font-size:11px; color:#64748b;">${s.desc_en}</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span>₹</span>
-            <input type="number" id="rateInput_${s.id}" class="admin-rate-input" value="${s.base_rate}" step="10" />
-            <button class="btn-wallet-action" style="padding:6px 10px; font-size:11px; background:#0d9488; color:#fff;" onclick="saveServiceRate('${s.id}')">Save</button>
-          </div>
+        <div class="admin-trades-list">
+          ${catServices.map(serv => `
+            <div class="admin-trade-item" id="admin-trade-item-${serv.id}">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div style="font-weight:700; font-size:13px; color:#0f172a;">
+                    ${isHi ? serv.name_hi : serv.name_en}
+                    <span style="font-size:11px; color:#94a3b8; font-weight:400; margin-left:6px;">(${serv.id})</span>
+                  </div>
+                  <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                    ${isHi ? serv.desc_hi : serv.desc_en}
+                  </div>
+                </div>
+                <span id="saved-badge-${serv.id}" style="display:none; background:#dcfce7; color:#15803d; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
+                  ✓ Saved
+                </span>
+              </div>
+
+              <!-- Editable Rate Row -->
+              <div class="admin-rate-edit-row">
+                <div class="admin-input-group">
+                  <span style="font-weight:800; color:#1e40af; font-size:14px; margin-right:4px;">₹</span>
+                  <input type="number" id="admin-input-rate-${serv.id}" class="admin-trade-rate-input" value="${serv.base_rate}" step="10" min="50" oninput="previewAdminRateCalc('${serv.id}', this.value)" />
+                  <span style="font-size:11px; color:#64748b; font-weight:600;">/ ${serv.unit === 'per_day' ? (isHi ? 'दिन' : 'day') : (isHi ? 'घंटा' : 'hour')}</span>
+                </div>
+                <button class="btn-save-trade-rate" id="btn-save-${serv.id}" onclick="saveServiceRate('${serv.id}')">
+                  <i class="fa-solid fa-floppy-disk"></i> <span>${isHi ? 'दर सेव करें' : 'Save Rate'}</span>
+                </button>
+              </div>
+
+              <!-- Real-time Price Breakdown Preview -->
+              <div class="admin-live-breakdown" id="breakdown-preview-${serv.id}">
+                <span class="calc-chip">Base: ₹${serv.base_rate}</span>
+                <span class="calc-operator">+</span>
+                <span class="calc-chip">10% WorkMate Charge: ₹${Math.round(serv.base_rate * 0.1)}</span>
+                <span class="calc-operator">=</span>
+                <span class="calc-chip-total">Customer Total: ₹${Math.round(serv.base_rate * 1.1)}</span>
+              </div>
+            </div>
+          `).join("")}
         </div>
-      `).join("");
-    }
-  } catch (e) {
-    console.error(e);
+      </div>
+    `;
+  }).join("");
+}
+
+function previewAdminRateCalc(serviceId, val) {
+  const num = parseFloat(val);
+  const el = document.getElementById("breakdown-preview-" + serviceId);
+  if (!el) return;
+  if (isNaN(num) || num <= 0) {
+    el.innerHTML = `<span style="color:#ef4444; font-size:11px;">Please enter a valid rate amount greater than ₹0</span>`;
+    return;
   }
+  const charge = Math.round(num * 0.1);
+  const total = Math.round(num * 1.1);
+  el.innerHTML = `
+    <span class="calc-chip">Base: ₹${num}</span>
+    <span class="calc-operator">+</span>
+    <span class="calc-chip">10% WorkMate Charge: ₹${charge}</span>
+    <span class="calc-operator">=</span>
+    <span class="calc-chip-total">Customer Total: ₹${total}</span>
+  `;
 }
 
 async function saveServiceRate(serviceId) {
-  const input = document.getElementById(`rateInput_${serviceId}`);
+  const input = document.getElementById(`admin-input-rate-${serviceId}`) || document.getElementById(`rateInput_${serviceId}`);
   if (!input) return;
   const newRate = parseFloat(input.value);
+  if (isNaN(newRate) || newRate <= 0) {
+    showToast("Please enter a valid positive number for rate.", "error");
+    return;
+  }
+
+  const btn = document.getElementById(`btn-save-${serviceId}`);
+  const origHtml = btn ? btn.innerHTML : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+  }
 
   try {
     const res = await fetch(`/api/services/${serviceId}/rate`, {
@@ -817,10 +968,123 @@ async function saveServiceRate(serviceId) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Rate update failed");
 
-    showToast(`Updated rate to ₹${newRate}! All customer quotes recalculated.`, "success");
-    await loadInitialData();
+    // Update in local state
+    const idx = state.services.findIndex(s => s.id === serviceId);
+    if (idx !== -1) {
+      state.services[idx].base_rate = newRate;
+    }
+
+    // Highlight item
+    const itemEl = document.getElementById(`admin-trade-item-${serviceId}`);
+    const badgeEl = document.getElementById(`saved-badge-${serviceId}`);
+    if (itemEl) itemEl.classList.add("updated-highlight");
+    if (badgeEl) {
+      badgeEl.style.display = "inline-block";
+      setTimeout(() => {
+        if (badgeEl) badgeEl.style.display = "none";
+        if (itemEl) itemEl.classList.remove("updated-highlight");
+      }, 3000);
+    }
+
+    const servName = state.lang === "hi" ? data.service.name_hi : data.service.name_en;
+    showToast(
+      state.lang === "hi" 
+        ? `${servName}: नई बेस दर ₹${newRate.toLocaleString('en-IN')}/दिन सफलतापूर्वक सेव हुई!` 
+        : `${servName}: New base rate ₹${newRate.toLocaleString('en-IN')} saved successfully!`, 
+      "success"
+    );
+
+    // Refresh pricing breakdown previews and dropdowns
+    previewAdminRateCalc(serviceId, newRate);
+    updateEstimatedPrice();
   } catch (e) {
     showToast(e.message, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+}
+
+async function saveRateFromBookingModal() {
+  const servSelect = document.getElementById("bookingServiceSelect");
+  const serviceId = servSelect ? servSelect.value : null;
+  if (!serviceId) return;
+
+  const rateInput = document.getElementById("modalBookingAdminRateInput");
+  const newRate = parseFloat(rateInput.value);
+  if (isNaN(newRate) || newRate <= 0) {
+    showToast("Please enter a valid rate amount.", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/services/${serviceId}/rate`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base_rate: newRate })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to update rate");
+
+    // Update state
+    const idx = state.services.findIndex(s => s.id === serviceId);
+    if (idx !== -1) {
+      state.services[idx].base_rate = newRate;
+    }
+
+    const badge = document.getElementById("adminInlineRateSavedBadge");
+    if (badge) {
+      badge.style.display = "inline";
+      setTimeout(() => { badge.style.display = "none"; }, 3000);
+    }
+
+    showToast(`Base rate updated to ₹${newRate}! Recalculating totals...`, "success");
+    
+    // Update select options
+    openBookingForCategory(state.selectedCategoryForBooking);
+    if (servSelect) servSelect.value = serviceId;
+    updateEstimatedPrice();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function renderAdminBanksDashboard() {
+  const container = document.getElementById("adminBankCardsList");
+  if (!container) return;
+
+  try {
+    const res = await fetch("/api/admin/banks");
+    const banks = await res.json();
+    state.adminBanks = banks;
+
+    container.innerHTML = banks.map(b => `
+      <div class="admin-bank-card ${b.is_primary ? 'active-primary' : ''}">
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span>${b.bank_name}</span>
+            ${b.is_primary 
+              ? `<span style="background:#10b981; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:800;">PRIMARY ACTIVE</span>` 
+              : `<span style="background:#e2e8f0; color:#475569; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600;">STANDBY BACKUP</span>`}
+          </div>
+          <div style="font-size:11px; color:#64748b; margin-top:2px;">
+            A/C: ${b.account_masked} • IFSC: ${b.ifsc} • UPI: <code>${b.upi_id}</code>
+          </div>
+          <div style="font-size:10px; color:#1e40af; margin-top:4px;">
+            Routed Volume: ₹${(b.total_routed_inr || 0).toLocaleString('en-IN')} • Failover Auto-Routing: Engaged
+          </div>
+        </div>
+        <div>
+          ${!b.is_primary 
+            ? `<button class="btn-wallet-action" style="padding:6px 12px; font-size:11px; background:#1a56db; color:#fff;" onclick="switchAdminBank('${b.id}')">Make Primary</button>` 
+            : `<span style="color:#10b981; font-weight:700; font-size:12px; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-check"></i> Primary Gateway</span>`}
+        </div>
+      </div>
+    `).join("");
+  } catch (e) {
+    console.error("Error loading admin banks:", e);
   }
 }
 
@@ -829,9 +1093,41 @@ async function switchAdminBank(bankId) {
     const res = await fetch(`/api/admin/banks/${bankId}/switch`, { method: "POST" });
     const data = await res.json();
     showToast(data.message || "Primary settlement bank updated!", "success");
-    openAdminConsoleModal();
+    renderAdminBanksDashboard();
   } catch (e) {
     showToast(e.message, "error");
+  }
+}
+
+async function renderAdminFinancials() {
+  const container = document.getElementById("adminFinancialStatsGrid");
+  if (!container) return;
+
+  try {
+    const res = await fetch("/api/admin/financial-stats");
+    const stats = await res.json();
+    state.adminStats = stats;
+
+    container.innerHTML = `
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; text-align:center;">
+        <div style="font-size:10px; color:#1e40af; font-weight:700;">TOTAL PLATFORM GMV</div>
+        <div style="font-size:18px; font-weight:800; color:#1e3a8a; margin-top:2px;">₹${(stats.total_gmv || 0).toLocaleString('en-IN')}</div>
+      </div>
+      <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:12px; border-radius:8px; text-align:center;">
+        <div style="font-size:10px; color:#065f46; font-weight:700;">10% WORKMATE CHARGE</div>
+        <div style="font-size:18px; font-weight:800; color:#047857; margin-top:2px;">₹${(stats.total_workmate_charge || 0).toLocaleString('en-IN')}</div>
+      </div>
+      <div style="background:#fef3c7; border:1px solid #fde68a; padding:12px; border-radius:8px; text-align:center;">
+        <div style="font-size:10px; color:#92400e; font-weight:700;">ESCROW RESERVES</div>
+        <div style="font-size:18px; font-weight:800; color:#b45309; margin-top:2px;">₹${(stats.active_escrow_reserves || 0).toLocaleString('en-IN')}</div>
+      </div>
+      <div style="background:#f1f5f9; border:1px solid #cbd5e1; padding:12px; border-radius:8px; text-align:center;">
+        <div style="font-size:10px; color:#475569; font-weight:700;">DISBURSED TO WORKERS</div>
+        <div style="font-size:18px; font-weight:800; color:#1e293b; margin-top:2px;">₹${(stats.worker_payouts_completed || 0).toLocaleString('en-IN')}</div>
+      </div>
+    `;
+  } catch (e) {
+    console.error("Error loading admin stats:", e);
   }
 }
 
@@ -842,15 +1138,34 @@ function openBookingForCategory(categoryId) {
   const select = document.getElementById("bookingServiceSelect");
   if (!select) return;
 
-  const filteredServices = state.services.filter(s => s.category_id === categoryId);
+  const filteredServices = categoryId ? state.services.filter(s => s.category_id === categoryId) : state.services;
   const isHi = state.lang === "hi";
 
-  select.innerHTML = filteredServices.map(s => `
-    <option value="${s.id}">${isHi ? s.name_hi : s.name_en} (₹${s.base_rate}/${isHi ? 'दिन' : 'day'})</option>
+  select.innerHTML = (filteredServices.length ? filteredServices : state.services).map(s => `
+    <option value="${s.id}">${isHi ? s.name_hi : s.name_en} (₹${s.base_rate}/${s.unit === 'per_day' ? (isHi ? 'दिन' : 'day') : (isHi ? 'घंटा' : 'hour')})</option>
   `).join("");
 
+  syncModalBookingAdminBox();
   updateEstimatedPrice();
   document.getElementById("modalBooking").classList.add("active");
+}
+
+function syncModalBookingAdminBox() {
+  const select = document.getElementById("bookingServiceSelect");
+  const adminBox = document.getElementById("modalBookingAdminRateBox");
+  const adminInput = document.getElementById("modalBookingAdminRateInput");
+  const adminUnit = document.getElementById("modalBookingAdminRateUnit");
+
+  if (!select) return;
+  const service = state.services.find(s => s.id === select.value);
+
+  if (state.session && state.session.role === "admin") {
+    if (adminBox) adminBox.style.display = "block";
+    if (adminInput && service) adminInput.value = service.base_rate;
+    if (adminUnit && service) adminUnit.textContent = `/${service.unit === 'per_day' ? (state.lang === 'hi' ? 'दिन' : 'day') : (state.lang === 'hi' ? 'घंटा' : 'hour')}`;
+  } else {
+    if (adminBox) adminBox.style.display = "none";
+  }
 }
 
 function updateEstimatedPrice() {
@@ -858,27 +1173,34 @@ function updateEstimatedPrice() {
   const durationInput = document.getElementById("bookingDurationHours");
   const typeSelect = document.getElementById("bookingTypeSelect");
   const priceDisplay = document.getElementById("bookingPriceEstimate");
+  const customOfferInput = document.getElementById("bookingCustomOfferInput");
 
   if (!select || !durationInput || !priceDisplay) return;
 
   const serviceId = select.value;
   const service = state.services.find(s => s.id === serviceId);
   const hours = parseInt(durationInput.value) || 4;
-  const isInstant = typeSelect.value === "instant";
+  const isInstant = typeSelect ? typeSelect.value === "instant" : true;
   const isHi = state.lang === "hi";
 
-  const baseRate = service ? service.base_rate : 750;
+  syncModalBookingAdminBox();
+
+  // Check if customer entered a custom budget offer
+  const customOfferVal = customOfferInput ? parseFloat(customOfferInput.value) : 0;
+  const isCustom = !isNaN(customOfferVal) && customOfferVal > 0;
+  const baseRate = isCustom ? customOfferVal : (service ? service.base_rate : 750);
+
   const subtotal = Math.round(baseRate * (hours >= 8 ? hours / 8 : hours / 4));
   const workmateCharge = Math.round(subtotal * 0.10); // 10% WorkMate Charge
   const emergency = isInstant ? 150 : 0;
-  const total = subtotal + emergency;
+  const total = subtotal + workmateCharge + emergency;
 
   priceDisplay.innerHTML = `
     <strong>₹${total.toLocaleString('en-IN')}</strong> 
     <span style="font-size:11px; color:#64748b; display:block; margin-top:2px;">
       ${isHi 
-        ? `मूल कार्य दर: ₹${subtotal} + 10% वर्कमेट सेवा शुल्क (WorkMate Charge): ₹${workmateCharge} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}`
-        : `Base Work Rate: ₹${subtotal} + 10% WorkMate Charge: ₹${workmateCharge} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`
+        ? `${isCustom ? '(प्रस्तावित दर) ' : ''}मूल कार्य दर: ₹${subtotal} + 10% वर्कमेट सेवा शुल्क (WorkMate Charge): ₹${workmateCharge} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}`
+        : `${isCustom ? '(Offered Rate) ' : ''}Base Work Rate: ₹${subtotal} + 10% WorkMate Charge: ₹${workmateCharge} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`
       }
     </span>
   `;
@@ -899,11 +1221,19 @@ async function submitBooking(event) {
     return;
   }
 
+  const customOfferInput = document.getElementById("bookingCustomOfferInput");
+  const customOfferVal = customOfferInput ? parseFloat(customOfferInput.value) : 0;
+  const isCustomOffer = !isNaN(customOfferVal) && customOfferVal > 0;
+
+  const descNote = notes 
+    ? (isCustomOffer ? `${notes} (Offered Rate: ₹${customOfferVal})` : notes)
+    : (isCustomOffer ? `Client Offered Budget: ₹${customOfferVal}/shift` : (isHi ? "कुशल लेबर की तत्काल आवश्यकता" : "Immediate requirement matching trade standards"));
+
   const payload = {
     customer_name: state.session && state.session.user ? state.session.user.name : state.userProfile.name,
     customer_phone: state.session && state.session.user ? state.session.user.phone : state.userProfile.phone,
     service_id: serviceId,
-    task_description: notes || (isHi ? "कुशल लेबर की तत्काल आवश्यकता" : "Immediate requirement matching trade standards"),
+    task_description: descNote,
     booking_type: bookingType,
     duration_hours: duration,
     location_address: address,
@@ -921,6 +1251,7 @@ async function submitBooking(event) {
     if (!res.ok) throw new Error("Work adding failed");
     const data = await res.json();
     closeModal("modalBooking");
+    if (customOfferInput) customOfferInput.value = "";
     showToast(isHi ? `भुगतान सफल! काम दर्ज हुआ व लेबर डिस्पैच हुई (#${data.booking.booking_number})` : `Payment Secured! Work Posted & Labour Dispatched (#${data.booking.booking_number})`, "success");
 
     await loadInitialData();
@@ -1143,7 +1474,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const servSelect = document.getElementById("bookingServiceSelect");
   const durInput = document.getElementById("bookingDurationHours");
   const typeSelect = document.getElementById("bookingTypeSelect");
+  const customOfferInput = document.getElementById("bookingCustomOfferInput");
   if (servSelect) servSelect.addEventListener("change", updateEstimatedPrice);
   if (durInput) durInput.addEventListener("input", updateEstimatedPrice);
   if (typeSelect) typeSelect.addEventListener("change", updateEstimatedPrice);
+  if (customOfferInput) customOfferInput.addEventListener("input", updateEstimatedPrice);
 });

@@ -71,7 +71,7 @@
   </div>
 
   <!-- ================= MAIN APP VIEW (When Logged In) ================= -->
-  <div class="viewport-wrapper">
+  <div id="appViewportWrapper" class="viewport-wrapper">
     <div id="appContainer" class="app-container" style="display:none;">
       
       <!-- Vibrant Blue App Header (Matching User's Brand Mockup) -->
@@ -101,8 +101,79 @@
         </div>
       </header>
 
+      <!-- Dedicated Admin Top Toolbar (Visible only when logged in as Admin) -->
+      <div id="adminTopBar" class="admin-top-bar" style="display:none;">
+        <div class="admin-top-badge">
+          <i class="fa-solid fa-crown"></i>
+          <span>ADMIN CONSOLE</span>
+        </div>
+        <div class="admin-view-switcher">
+          <button id="btnAdminViewMode" class="admin-toggle-btn active" onclick="switchAdminView('admin')">
+            <i class="fa-solid fa-sliders"></i> <span data-i18n="adminRatesTab">4 Module Rates</span>
+          </button>
+          <button id="btnCustomerViewMode" class="admin-toggle-btn" onclick="switchAdminView('customer')">
+            <i class="fa-solid fa-mobile-screen"></i> <span data-i18n="customerPreviewTab">Customer View</span>
+          </button>
+        </div>
+        <button class="admin-direct-logout-btn" onclick="openLogoutModal()" title="Log out of Admin Session">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span data-i18n="btnLogout">Logout</span>
+        </button>
+      </div>
+
       <!-- Content Views -->
       <main class="app-content">
+
+        <!-- ================= Screen 0: Dedicated Admin Master Rates & Banks Dashboard ================= -->
+        <section id="screen-admin" class="screen-view">
+          <div class="admin-panel-hero">
+            <div class="admin-hero-left">
+              <h2 style="font-size:17px; font-weight:800; color:#1e3a8a; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-gear" style="color:#1a56db;"></i>
+                <span data-i18n="adminHeroTitle">WorkMate Rate & System Control</span>
+              </h2>
+              <p style="font-size:12px; color:#475569; margin-top:4px; line-height:1.4;" data-i18n="adminHeroSub">
+                Edit base prices for all 4 service modules in real-time. Changes instantly recalculate customer checkout totals.
+              </p>
+            </div>
+          </div>
+
+          <!-- 4 Core Service Modules Price Editor -->
+          <div class="admin-section-header">
+            <span class="admin-section-tag"><i class="fa-solid fa-tags"></i> 4 Core Service Modules</span>
+            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;" data-i18n="adminModulesHeader">
+              Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)
+            </h3>
+          </div>
+
+          <!-- Dynamic 4 Modules Rate Container -->
+          <div id="adminModulesRatesContainer" class="admin-modules-container">
+            <!-- Rendered dynamically for Construction, Events, Shifting, Textile -->
+          </div>
+
+          <!-- Multi-Bank Payment Gateway & Auto-Failover -->
+          <div class="admin-section-header" style="margin-top:24px;">
+            <span class="admin-section-tag" style="background:#e0f2fe; color:#0369a1;"><i class="fa-solid fa-building-columns"></i> Multi-Bank Routing</span>
+            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;">
+              Admin Bank Settlement & Failover Routing
+            </h3>
+          </div>
+
+          <div id="adminBankCardsList" class="admin-banks-grid">
+            <!-- Dynamic bank list render -->
+          </div>
+
+          <!-- Platform Financial Metrics -->
+          <div class="admin-section-header" style="margin-top:24px;">
+            <span class="admin-section-tag" style="background:#fef3c7; color:#b45309;"><i class="fa-solid fa-chart-line"></i> Operations</span>
+            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;">
+              Live Financial Health & Escrow
+            </h3>
+          </div>
+          <div id="adminFinancialStatsGrid" class="admin-stats-grid">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
 
         <!-- ================= Screen 1: Home View ================= -->
         <section id="screen-home" class="screen-view active">
@@ -340,6 +411,10 @@
 
       <!-- Bottom Navigation Bar (Page 1 Mockup) -->
       <nav class="bottom-nav-bar">
+        <button id="nav-admin" class="nav-item-btn" onclick="switchTab('admin')" style="display:none; color:#1e40af;">
+          <i class="fa-solid fa-crown"></i>
+          <span>Admin</span>
+        </button>
         <button id="nav-home" class="nav-item-btn active" onclick="switchTab('home')">
           <i class="fa-solid fa-house"></i>
           <span data-i18n="navHome">Home</span>
@@ -374,6 +449,39 @@
           <div class="form-group">
             <label class="form-label">Select Service / Trade (सेवा चयन)</label>
             <select id="bookingServiceSelect" class="form-select" required></select>
+          </div>
+
+          <!-- Admin Base Rate Editor Inside Modal -->
+          <div id="modalBookingAdminRateBox" class="modal-admin-rate-box" style="display:none;">
+            <div style="font-size:12px; font-weight:700; color:#1e40af; display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <span><i class="fa-solid fa-pen-to-square"></i> Admin: Official Base Rate for this Trade:</span>
+              <span id="adminInlineRateSavedBadge" style="display:none; color:#10b981; font-weight:700;">✓ Updated!</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div style="display:flex; align-items:center; background:#ffffff; border:1px solid #93c5fd; border-radius:6px; padding:0 8px; flex:1;">
+                <span style="font-weight:700; color:#1e40af; font-size:14px; margin-right:4px;">₹</span>
+                <input type="number" id="modalBookingAdminRateInput" class="form-input" style="border:none; padding:6px 0; font-weight:700; font-size:14px;" step="10" min="50" />
+                <span id="modalBookingAdminRateUnit" style="font-size:11px; color:#64748b; margin-left:4px;">/day</span>
+              </div>
+              <button type="button" class="btn-save-inline-rate" onclick="saveRateFromBookingModal()">
+                <i class="fa-solid fa-floppy-disk"></i> Update Rate
+              </button>
+            </div>
+            <div style="font-size:11px; color:#2563eb; margin-top:4px;">
+              Updating will save changes to the database and re-calculate prices across the platform.
+            </div>
+          </div>
+
+          <!-- Customer Custom Pay Offer Field -->
+          <div class="form-group" id="customerOfferBudgetGroup">
+            <label class="form-label" style="display:flex; justify-content:space-between;">
+              <span>Your Offered Work Pay (तय की गई मजदूरी / बजट)</span>
+              <span style="font-weight:400; color:#64748b; font-size:11px;">(Optional Custom Offer)</span>
+            </label>
+            <div style="display:flex; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:0 10px;">
+              <span style="font-weight:700; color:#334155; font-size:14px; margin-right:4px;">₹</span>
+              <input type="number" id="bookingCustomOfferInput" class="form-input" style="border:none; padding:8px 0; font-weight:700; font-size:14px;" placeholder="Leave empty for official base rate" min="100" step="50" oninput="updateEstimatedPrice()" />
+            </div>
           </div>
 
           <div class="form-group">

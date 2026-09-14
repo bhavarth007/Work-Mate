@@ -1447,3 +1447,276 @@ body {
   margin-bottom: 14px;
   display: block;
 }
+
+/* ================= Dedicated Admin Dashboard & 4-Module Rate Editor ================= */
+
+.admin-top-bar {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #1e40af;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.admin-top-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+}
+
+.admin-view-switcher {
+  display: flex;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.admin-toggle-btn {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.admin-toggle-btn.active {
+  background: #1a56db;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.4);
+}
+
+.admin-direct-logout-btn {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.admin-direct-logout-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.admin-panel-hero {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.admin-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.admin-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 800;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 3px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.admin-modules-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-module-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.admin-module-header {
+  padding: 14px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-module-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-module-icon-badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.admin-trades-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.admin-trade-item {
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.admin-trade-item:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.admin-trade-item.updated-highlight {
+  border-color: #10b981 !important;
+  background: #f0fdf4 !important;
+}
+
+.admin-rate-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-input-group {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 8px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.admin-trade-rate-input {
+  border: none !important;
+  padding: 6px 4px !important;
+  font-weight: 800 !important;
+  font-size: 15px !important;
+  color: #0f172a !important;
+  width: 80px !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.btn-save-trade-rate {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-save-trade-rate:hover {
+  background: #15803d;
+}
+
+.admin-live-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+.calc-chip {
+  background: #e2e8f0;
+  color: #334155;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.calc-operator {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.calc-chip-total {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.modal-admin-rate-box {
+  background: #eff6ff;
+  border: 1.5px dashed #3b82f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.btn-save-inline-rate {
+  background: #1e40af;
+  color: #ffffff;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-save-inline-rate:hover {
+  background: #1d4ed8;
+}
+
