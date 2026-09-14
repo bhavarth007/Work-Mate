@@ -85,7 +85,7 @@ class Booking(BaseModel):
     worker_payout_amount: float
     otp: str = "4567"
     eta_minutes: int = 15
-    status: Literal["upcoming", "in_progress", "completed", "cancelled", "disputed_refunded", "disputed_replacement"] = "upcoming"
+    status: Literal["upcoming", "in_progress", "arrived", "working", "completed", "cancelled", "disputed_refunded", "disputed_replacement"] = "upcoming"
     location_address: str
     lat: float
     lng: float
@@ -101,7 +101,7 @@ class OTPVerifyRequest(BaseModel):
 
 class BookingStatusUpdateRequest(BaseModel):
     booking_id: str
-    status: Literal["upcoming", "in_progress", "completed", "cancelled", "disputed_refunded", "disputed_replacement"]
+    status: Literal["upcoming", "in_progress", "arrived", "working", "completed", "cancelled", "disputed_refunded", "disputed_replacement"]
 
 class WalletTransaction(BaseModel):
     id: str

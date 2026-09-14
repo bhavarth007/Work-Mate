@@ -455,6 +455,12 @@ WEB_APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web
 
 if os.path.isdir(WEB_APP_DIR):
     app.mount("/static", StaticFiles(directory=WEB_APP_DIR), name="static")
+    css_dir = os.path.join(WEB_APP_DIR, "css")
+    js_dir = os.path.join(WEB_APP_DIR, "js")
+    if os.path.isdir(css_dir):
+        app.mount("/css", StaticFiles(directory=css_dir), name="css")
+    if os.path.isdir(js_dir):
+        app.mount("/js", StaticFiles(directory=js_dir), name="js")
 
     @app.get("/")
     def serve_frontend_root():
