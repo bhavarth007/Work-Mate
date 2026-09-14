@@ -4,7 +4,7 @@ REST API for On-Demand Blue-Collar Labour Platform with Web Client Serving.
 """
 import os
 import math
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -26,7 +26,7 @@ from .database import (
     get_transactions, get_reviews, create_review,
     get_user_profile, update_user_profile,
     update_service_rate, get_admin_banks, switch_primary_bank,
-    get_admin_financial_stats
+    get_admin_financial_stats, get_system_config, set_platform_charge_percent
 )
 
 # Initialize database schema and seeds
@@ -297,17 +297,18 @@ def submit_review(payload: ReviewCreate):
 # ----------------- User Profile Management ----------------- #
 
 @app.get("/api/user/profile")
-def view_profile():
-    return get_user_profile()
+def view_profile(user_id: Optional[str] = None):
+    return get_user_profile(user_id)
 
 @app.put("/api/user/profile")
-def edit_profile(payload: UserProfileUpdate):
+def edit_profile(payload: UserProfileUpdate, user_id: Optional[str] = "u-1"):
     updated = update_user_profile(
         name=payload.name,
         phone=payload.phone,
         address=payload.address,
         city=payload.city,
-        email=payload.email
+        email=payload.email,
+        user_id=user_id
     )
     return {
         "success": True,
@@ -320,21 +321,16 @@ def edit_profile(payload: UserProfileUpdate):
 @app.post("/api/auth/login")
 def login(payload: AuthLoginRequest):
     ident = payload.identifier.strip().lower()
-    if payload.role == "admin" or ident in ["admin", "admin@workmate.in"]:
+    valid_admins = ["admin", "admin@workmate.in", "bhavarthhapani7@gmail.com"]
+    if payload.role == "admin" or ident in valid_admins:
         # Admin authentication
-        valid_admins = ["admin", "admin@workmate.in"]
         if ident in valid_admins and payload.password == "admin123":
+            admin_prof = get_user_profile("admin-1")
             return {
                 "success": True,
                 "token": "wm_admin_sec_token_9901",
                 "role": "admin",
-                "user": {
-                    "id": "admin-1",
-                    "name": "WorkMate Admin (प्रशासक)",
-                    "email": "admin@workmate.in",
-                    "role": "admin",
-                    "member_id": "WM-ADMIN-001"
-                }
+                "user": admin_prof
             }
         else:
             raise HTTPException(
@@ -343,13 +339,31 @@ def login(payload: AuthLoginRequest):
             )
     else:
         # Customer Phone login
-        profile = get_user_profile()
+        profile = get_user_profile("u-1")
         return {
             "success": True,
             "token": "wm_cust_sec_token_4402",
             "role": "customer",
             "user": profile
         }
+
+# ----------------- Platform Configuration ----------------- #
+
+@app.get("/api/admin/config")
+def get_config():
+    return get_system_config()
+
+@app.put("/api/admin/config/platform-charge")
+def set_platform_charge(payload: Dict[str, Any]):
+    val = float(payload.get("percent", 10.0))
+    if val < 0 or val > 50:
+        raise HTTPException(status_code=400, detail="Percentage must be between 0% and 50%")
+    saved = set_platform_charge_percent(val)
+    return {
+        "success": True,
+        "message": f"Platform Charge updated to {saved}%",
+        "platform_charge_percent": saved
+    }
 
 # ----------------- Admin Service Rate & Bank Routing ----------------- #
 

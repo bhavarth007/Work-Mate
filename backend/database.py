@@ -192,6 +192,31 @@ def init_db():
             )
         """)
 
+        # System Administrator Profile (bhavarthhapani7@gmail.com / 7878193644)
+        cursor.execute("""
+            INSERT OR REPLACE INTO users (
+                id, name, phone, email, address, city, photo,
+                aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status
+            ) VALUES (
+                'admin-1', 'admin', '7878193644', 'bhavarthhapani7@gmail.com',
+                '', '',
+                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
+                '', 'WM-ADMIN-001', 'System Administrator', 'January 2026', 5.0, 'verified'
+            )
+        """)
+
+        # System Configuration Table (e.g. Configurable Platform Charge % - Default 10%)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS system_config (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        """)
+        cursor.execute("""
+            INSERT OR IGNORE INTO system_config (key, value)
+            VALUES ('platform_charge_percent', '10.0')
+        """)
+
         # Admin Multi-Bank Routing & Auto-Failover Accounts
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS admin_banks (
@@ -640,12 +665,29 @@ def create_review(data: Dict[str, Any]) -> Dict[str, Any]:
         conn.close()
         return {"id": rev_id, "success": True}
 
-def get_user_profile() -> Dict[str, Any]:
+def get_user_profile(user_id: Optional[str] = None) -> Dict[str, Any]:
     conn = get_connection()
-    row = conn.execute("SELECT * FROM users WHERE id = 'u-1'").fetchone()
+    uid = user_id or 'u-1'
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
     conn.close()
     if row:
         return dict(row)
+    if uid in ['admin-1', 'admin']:
+        return {
+            "id": "admin-1",
+            "name": "admin",
+            "phone": "7878193644",
+            "email": "bhavarthhapani7@gmail.com",
+            "address": "",
+            "city": "",
+            "photo": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
+            "aadhaar_masked": "",
+            "member_id": "WM-ADMIN-001",
+            "account_type": "System Administrator",
+            "joined_date": "January 2026",
+            "trust_score": 5.0,
+            "kyc_status": "verified"
+        }
     return {
         "id": "u-1",
         "name": "Ramesh Kumar",
@@ -662,18 +704,43 @@ def get_user_profile() -> Dict[str, Any]:
         "kyc_status": "verified"
     }
 
-def update_user_profile(name: str, phone: str, address: str, city: str, email: Optional[str] = None) -> Dict[str, Any]:
+def update_user_profile(name: str, phone: str, address: str, city: str, email: Optional[str] = None, user_id: str = "u-1") -> Dict[str, Any]:
     with _lock:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE users
             SET name = ?, phone = ?, address = ?, city = ?, email = COALESCE(?, email)
-            WHERE id = 'u-1'
-        """, (name, phone, address, city, email))
+            WHERE id = ?
+        """, (name, phone, address, city, email, user_id))
         conn.commit()
         conn.close()
-        return get_user_profile()
+        return get_user_profile(user_id)
+
+def get_system_config() -> Dict[str, Any]:
+    conn = get_connection()
+    rows = conn.execute("SELECT key, value FROM system_config").fetchall()
+    conn.close()
+    config = {"platform_charge_percent": 10.0}
+    for r in rows:
+        try:
+            config[r["key"]] = float(r["value"])
+        except (ValueError, TypeError):
+            config[r["key"]] = r["value"]
+    return config
+
+def set_platform_charge_percent(percent: float) -> float:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO system_config (key, value)
+            VALUES ('platform_charge_percent', ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+        """, (str(percent),))
+        conn.commit()
+        conn.close()
+        return percent
 
 # ----------------- Admin Console Management ----------------- #
 

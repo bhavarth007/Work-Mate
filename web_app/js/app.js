@@ -33,7 +33,8 @@ const state = {
     kyc_status: "verified"
   },
   adminBanks: [],
-  adminStats: {}
+  adminStats: {},
+  platformChargePercent: 10
 };
 
 // 100% Pure Bilingual Localization Dictionary
@@ -94,7 +95,7 @@ const I18N = {
     rateWorkerLabel: "Rate Worker & Leave Review",
     noBookings: "No booking records found.",
     noActiveBooking: "No active in-progress booking. Tap button below to book instant labour.",
-    chargeNotice: "10% WorkMate Charge",
+    chargeNotice: "Charge",
     payAndPostBtn: "💳 Pay & Post Work (Reserve Labour)",
     langBtnLabel: "English",
     adminRatesTab: "4 Module Rates",
@@ -159,7 +160,7 @@ const I18N = {
     rateWorkerLabel: "रेटिंग और समीक्षा दें",
     noBookings: "कोई बुकिंग रिकॉर्ड नहीं मिला।",
     noActiveBooking: "वर्तमान में कोई सक्रिय बुकिंग नहीं है। नीचे दिए बटन से तुरंत लेबर बुक करें।",
-    chargeNotice: "10% वर्कमेट सेवा शुल्क (WorkMate Charge)",
+    chargeNotice: "चार्ज (Charge)",
     payAndPostBtn: "💳 भुगतान करें एवं काम जोड़ें (लेबर आरक्षित करें)",
     langBtnLabel: "हिन्दी",
     adminRatesTab: "4 मॉड्यूल की दरें",
@@ -425,14 +426,22 @@ function applyTranslations() {
   }
 
   const greetingEl = document.getElementById("userGreetingText");
+  const isAdmin = state.session && state.session.role === "admin";
   if (greetingEl) {
-    const uName = state.session && state.session.user ? state.session.user.name : state.userProfile.name;
+    const uName = isAdmin ? "admin" : (state.session && state.session.user ? state.session.user.name : state.userProfile.name);
     greetingEl.textContent = `${dict.greeting}${uName}!`;
   }
 
   const locEl = document.getElementById("headerLocationText");
   if (locEl) {
-    locEl.textContent = state.userProfile.address || "Flat 402, Lotus Tower, Sector 14";
+    locEl.textContent = isAdmin ? (isHi ? "वर्कमेट प्रशासनिक मुख्यालय" : "WorkMate Admin HQ") : (state.userProfile.address || "Flat 402, Lotus Tower, Sector 14");
+  }
+
+  const headerAvatar = document.querySelector(".header-user-avatar img");
+  if (headerAvatar) {
+    headerAvatar.src = isAdmin 
+      ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+      : (state.userProfile.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face");
   }
 }
 
@@ -492,6 +501,8 @@ async function loadInitialData() {
     }
 
     state.activeBooking = state.bookings.find(b => b.status === "in_progress") || state.bookings[0];
+
+    await loadPlatformConfig();
 
     renderCategories();
     renderActiveBooking();
@@ -762,53 +773,112 @@ function renderReviews() {
 }
 
 function renderProfile() {
-  const p = state.userProfile;
   const isHi = state.lang === "hi";
   const dict = I18N[state.lang];
+  const isAdmin = state.session && state.session.role === "admin";
+
+  // Dedicated admin profile vs customer profile
+  const p = isAdmin ? {
+    name: "admin",
+    phone: "7878193644",
+    email: "bhavarthhapani7@gmail.com",
+    address: "",
+    city: "",
+    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
+    member_id: "WM-ADMIN-001",
+    account_type: isHi ? "सिस्टम प्रशासक (Admin)" : "System Administrator",
+    joined_date: isHi ? "जनवरी 2026" : "January 2026",
+    trust_score: 5.0,
+    kyc_status: "verified"
+  } : (state.userProfile || {});
 
   const nameEl = document.getElementById("accountUserName");
   const phoneEl = document.getElementById("accountUserPhone");
-  if (nameEl) nameEl.textContent = p.name;
-  if (phoneEl) phoneEl.textContent = p.phone;
+  if (nameEl) nameEl.textContent = p.name || (isAdmin ? "admin" : "Ramesh Kumar");
+  if (phoneEl) phoneEl.textContent = p.phone || (isAdmin ? "7878193644" : "+91 98765 43210");
+
+  const avatarImg = document.querySelector(".profile-avatar-large img");
+  if (avatarImg && p.photo) {
+    avatarImg.src = p.photo;
+  }
 
   const grid = document.getElementById("accountDetailsGrid");
   if (grid) {
-    grid.innerHTML = `
-      <div class="detail-pill">
-        <div class="detail-label"><i class="fa-solid fa-lock"></i> ${dict.memberIdLabel}</div>
-        <div class="detail-value">${p.member_id}</div>
-      </div>
-      <div class="detail-pill">
-        <div class="detail-label"><i class="fa-solid fa-shield-halved"></i> ${dict.aadhaarLabel}</div>
-        <div class="detail-value" style="color:#10b981;">✓ ${isHi ? "सत्यापित" : "Verified"} (${p.aadhaar_masked})</div>
-      </div>
-      <div class="detail-pill">
-        <div class="detail-label"><i class="fa-solid fa-crown"></i> ${dict.accountTypeLabel}</div>
-        <div class="detail-value">${isHi ? "प्रीमियम ग्राहक" : p.account_type}</div>
-      </div>
-      <div class="detail-pill">
-        <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
-        <div class="detail-value">${p.joined_date}</div>
-      </div>
-      <div class="detail-pill" style="grid-column: span 2;">
-        <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? "पंजीकृत सेवा का पता" : "Registered Service Address"}</div>
-        <div class="detail-value">${p.address}, ${p.city}</div>
-      </div>
-    `;
+    if (isAdmin) {
+      grid.innerHTML = `
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-lock"></i> ${dict.memberIdLabel}</div>
+          <div class="detail-value">${p.member_id}</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-shield-halved"></i> ${isHi ? 'भूमिका' : 'Role'}</div>
+          <div class="detail-value" style="color:#1e40af; font-weight:800;">${p.account_type}</div>
+        </div>
+        <div class="detail-pill" style="grid-column: span 2;">
+          <div class="detail-label"><i class="fa-solid fa-envelope"></i> Email (ईमेल)</div>
+          <div class="detail-value" style="color:#0f172a; font-weight:700;">${p.email}</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-phone"></i> ${isHi ? 'मोबाइल' : 'Mobile'}</div>
+          <div class="detail-value">${p.phone}</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
+          <div class="detail-value">${p.joined_date}</div>
+        </div>
+        <div class="detail-pill" style="grid-column: span 2;">
+          <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? 'पता' : 'Address'}</div>
+          <div class="detail-value" style="color:#94a3b8; font-style:italic;">— (Blank)</div>
+        </div>
+      `;
+    } else {
+      grid.innerHTML = `
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-lock"></i> ${dict.memberIdLabel}</div>
+          <div class="detail-value">${p.member_id}</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-shield-halved"></i> ${dict.aadhaarLabel}</div>
+          <div class="detail-value" style="color:#10b981;">✓ ${isHi ? "सत्यापित" : "Verified"} (${p.aadhaar_masked})</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-crown"></i> ${dict.accountTypeLabel}</div>
+          <div class="detail-value">${isHi ? "प्रीमियम ग्राहक" : p.account_type}</div>
+        </div>
+        <div class="detail-pill">
+          <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
+          <div class="detail-value">${p.joined_date}</div>
+        </div>
+        <div class="detail-pill" style="grid-column: span 2;">
+          <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? "पंजीकृत सेवा का पता" : "Registered Service Address"}</div>
+          <div class="detail-value">${p.address}, ${p.city}</div>
+        </div>
+      `;
+    }
   }
 }
 
 // ----------------- Profile Edit ----------------- //
 
 function openEditProfileModal() {
-  const p = state.userProfile;
+  const isAdmin = state.session && state.session.role === "admin";
+  const p = isAdmin ? {
+    name: "admin",
+    phone: "7878193644",
+    email: "bhavarthhapani7@gmail.com",
+    address: "",
+    city: "",
+    member_id: "WM-ADMIN-001",
+    aadhaar_masked: ""
+  } : state.userProfile;
+
   document.getElementById("editProfileName").value = p.name;
   document.getElementById("editProfilePhone").value = p.phone;
   document.getElementById("editProfileEmail").value = p.email || "";
-  document.getElementById("editProfileAddress").value = p.address;
-  document.getElementById("editProfileCity").value = p.city;
+  document.getElementById("editProfileAddress").value = p.address || "";
+  document.getElementById("editProfileCity").value = p.city || "";
   document.getElementById("editProfileMemberId").value = p.member_id;
-  document.getElementById("editProfileAadhaar").value = `Verified UIDAI: ${p.aadhaar_masked}`;
+  document.getElementById("editProfileAadhaar").value = p.aadhaar_masked ? `Verified UIDAI: ${p.aadhaar_masked}` : "—";
 
   document.getElementById("modalEditProfile").classList.add("active");
 }
@@ -844,6 +914,54 @@ async function submitProfileEdit(event) {
 }
 
 // ----------------- Dedicated Admin Dashboard (4-Module Rate Editor & Routing) ----------------- //
+
+async function loadPlatformConfig() {
+  try {
+    const res = await fetch("/api/admin/config");
+    if (res.ok) {
+      const data = await res.json();
+      state.platformChargePercent = data.platform_charge_percent || 10;
+      const input = document.getElementById("adminPlatformChargePercentInput");
+      if (input) input.value = state.platformChargePercent;
+    }
+  } catch (e) {
+    console.error("Could not load platform config:", e);
+  }
+}
+
+async function savePlatformChargePercent() {
+  const input = document.getElementById("adminPlatformChargePercentInput");
+  if (!input) return;
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0 || val > 50) {
+    showToast("Please enter a valid percentage between 0 and 50", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/admin/config/platform-charge", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ percent: val })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to update platform charge");
+
+    state.platformChargePercent = data.platform_charge_percent;
+    const statusEl = document.getElementById("chargePercentStatus");
+    if (statusEl) {
+      statusEl.style.display = "block";
+      setTimeout(() => { statusEl.style.display = "none"; }, 3500);
+    }
+    showToast(data.message || "Platform charge percent updated!", "success");
+
+    // Recalculate module prices and quotes
+    renderAdminModulesRates();
+    updateEstimatedPrice();
+  } catch (e) {
+    showToast(e.message, "error");
+  }
+}
 
 function renderAdminModulesRates() {
   const container = document.getElementById("adminModulesRatesContainer");
@@ -911,9 +1029,9 @@ function renderAdminModulesRates() {
               <div class="admin-live-breakdown" id="breakdown-preview-${serv.id}">
                 <span class="calc-chip">Base: ₹${serv.base_rate}</span>
                 <span class="calc-operator">+</span>
-                <span class="calc-chip">10% WorkMate Charge: ₹${Math.round(serv.base_rate * 0.1)}</span>
+                <span class="calc-chip">${isHi ? 'चार्ज' : 'Charge'}: ₹${Math.round(serv.base_rate * ((state.platformChargePercent || 10) / 100))}</span>
                 <span class="calc-operator">=</span>
-                <span class="calc-chip-total">Customer Total: ₹${Math.round(serv.base_rate * 1.1)}</span>
+                <span class="calc-chip-total">Customer Total: ₹${Math.round(serv.base_rate * (1 + (state.platformChargePercent || 10) / 100))}</span>
               </div>
             </div>
           `).join("")}
@@ -931,12 +1049,14 @@ function previewAdminRateCalc(serviceId, val) {
     el.innerHTML = `<span style="color:#ef4444; font-size:11px;">Please enter a valid rate amount greater than ₹0</span>`;
     return;
   }
-  const charge = Math.round(num * 0.1);
-  const total = Math.round(num * 1.1);
+  const pct = state.platformChargePercent || 10;
+  const charge = Math.round(num * (pct / 100));
+  const total = Math.round(num + charge);
+  const isHi = state.lang === "hi";
   el.innerHTML = `
     <span class="calc-chip">Base: ₹${num}</span>
     <span class="calc-operator">+</span>
-    <span class="calc-chip">10% WorkMate Charge: ₹${charge}</span>
+    <span class="calc-chip">${isHi ? 'चार्ज' : 'Charge'}: ₹${charge}</span>
     <span class="calc-operator">=</span>
     <span class="calc-chip-total">Customer Total: ₹${total}</span>
   `;
@@ -1191,16 +1311,17 @@ function updateEstimatedPrice() {
   const baseRate = isCustom ? customOfferVal : (service ? service.base_rate : 750);
 
   const subtotal = Math.round(baseRate * (hours >= 8 ? hours / 8 : hours / 4));
-  const workmateCharge = Math.round(subtotal * 0.10); // 10% WorkMate Charge
+  const chargePct = state.platformChargePercent || 10;
+  const platformCharge = Math.round(subtotal * (chargePct / 100));
   const emergency = isInstant ? 150 : 0;
-  const total = subtotal + workmateCharge + emergency;
+  const total = subtotal + platformCharge + emergency;
 
   priceDisplay.innerHTML = `
     <strong>₹${total.toLocaleString('en-IN')}</strong> 
     <span style="font-size:11px; color:#64748b; display:block; margin-top:2px;">
       ${isHi 
-        ? `${isCustom ? '(प्रस्तावित दर) ' : ''}मूल कार्य दर: ₹${subtotal} + 10% वर्कमेट सेवा शुल्क (WorkMate Charge): ₹${workmateCharge} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}`
-        : `${isCustom ? '(Offered Rate) ' : ''}Base Work Rate: ₹${subtotal} + 10% WorkMate Charge: ₹${workmateCharge} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`
+        ? `${isCustom ? '(प्रस्तावित दर) ' : ''}मूल कार्य दर: ₹${subtotal} + चार्ज: ₹${platformCharge} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}`
+        : `${isCustom ? '(Offered Rate) ' : ''}Base Work Rate: ₹${subtotal} + Charge: ₹${platformCharge} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`
       }
     </span>
   `;

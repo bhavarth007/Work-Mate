@@ -163,15 +163,29 @@
             <!-- Dynamic bank list render -->
           </div>
 
-          <!-- Platform Financial Metrics -->
+          <!-- Platform Charge Percentage Configuration (Default 10%, Admin Configurable) -->
           <div class="admin-section-header" style="margin-top:24px;">
-            <span class="admin-section-tag" style="background:#fef3c7; color:#b45309;"><i class="fa-solid fa-chart-line"></i> Operations</span>
+            <span class="admin-section-tag" style="background:#fef3c7; color:#b45309;"><i class="fa-solid fa-percent"></i> Platform Fee Settings</span>
             <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;">
-              Live Financial Health & Escrow
+              WorkMate Platform Charge Configuration (प्लेटफॉर्म चार्ज)
             </h3>
           </div>
-          <div id="adminFinancialStatsGrid" class="admin-stats-grid">
-            <!-- Rendered dynamically -->
+          <div class="admin-module-card" style="padding:16px 18px;">
+            <div style="font-size:13px; color:#475569; margin-bottom:12px; line-height:1.5;">
+              Configure the platform charge percentage applied to bookings. <strong>The percentage number is kept hidden from customers</strong> (they see only <code>Charge: ₹...</code> / <code>चार्ज: ₹...</code>). Default is 10%.
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; max-width:340px;">
+              <div class="admin-input-group" style="padding:4px 10px;">
+                <input type="number" id="adminPlatformChargePercentInput" class="admin-trade-rate-input" value="10" step="0.5" min="0" max="50" style="width:70px !important;" />
+                <span style="font-weight:800; color:#1e40af; font-size:16px;">%</span>
+              </div>
+              <button class="btn-save-trade-rate" onclick="savePlatformChargePercent()">
+                <i class="fa-solid fa-floppy-disk"></i> <span>Save Charge %</span>
+              </button>
+            </div>
+            <div id="chargePercentStatus" style="font-size:12px; color:#10b981; margin-top:8px; font-weight:700; display:none;">
+              ✓ Platform charge updated! All customer estimates recalculated.
+            </div>
           </div>
         </section>
 
