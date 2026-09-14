@@ -168,9 +168,9 @@ class UserAvatarUpdate(BaseModel):
     photo: str
 
 class AuthLoginRequest(BaseModel):
-    role: Literal["customer", "admin"] = "customer"
-    identifier: str  # Phone number for customer, username/email for admin
-    password: Optional[str] = None
+    identifier: str = Field(..., min_length=1)  # 10-digit phone or admin
+    password: str = Field(..., min_length=6)
+    role: Optional[Literal["customer", "admin"]] = "customer"
     otp: Optional[str] = "1234"
 
 class ServiceRateUpdate(BaseModel):
@@ -178,10 +178,29 @@ class ServiceRateUpdate(BaseModel):
 
 class CustomerRegisterRequest(BaseModel):
     name: str = Field(..., min_length=1)
-    phone: str = Field(..., min_length=5)
+    phone: str = Field(..., min_length=10, max_length=10)
+    password: str = Field(..., min_length=6)
+    address: str = Field(..., min_length=1)
+    city: str = Field(..., min_length=1)
+    email: Optional[str] = None
+
+class AdminUserCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=10, max_length=10)
+    password: str = Field(..., min_length=6)
     address: Optional[str] = ""
     city: Optional[str] = ""
     email: Optional[str] = None
+    role: Literal["customer", "admin"] = "customer"
+
+class AdminUserUpdateRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=10, max_length=10)
+    password: Optional[str] = Field(None, min_length=6)
+    address: Optional[str] = ""
+    city: Optional[str] = ""
+    email: Optional[str] = None
+    role: Literal["customer", "admin"] = "customer"
 
 class BookingDisputeRequest(BaseModel):
     booking_id: str

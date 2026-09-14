@@ -178,7 +178,9 @@ def init_db():
                 account_type TEXT DEFAULT 'Customer Premium',
                 joined_date TEXT DEFAULT 'September 14, 2026',
                 trust_score REAL DEFAULT 4.9,
-                kyc_status TEXT DEFAULT 'verified'
+                kyc_status TEXT DEFAULT 'verified',
+                password TEXT DEFAULT '123456',
+                role TEXT DEFAULT 'customer'
             )
         """)
 
@@ -205,6 +207,27 @@ def init_db():
                 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
                 '', 'WM-ADMIN-001', 'System Administrator', 'September 14, 2026', 5.0, 'verified'
             )
+        """)
+
+        # Column migration for password and role
+        user_cols = [c[1] for c in cursor.execute("PRAGMA table_info(users)").fetchall()]
+        if "password" not in user_cols:
+            cursor.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT '123456'")
+        if "role" not in user_cols:
+            cursor.execute("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'customer'")
+
+        # Ensure admin account has role admin and password
+        cursor.execute("""
+            UPDATE users
+            SET role = 'admin', password = COALESCE(NULLIF(password, ''), 'admin123')
+            WHERE id = 'admin-1' OR phone = '7878193644' OR name = 'admin'
+        """)
+
+        # Ensure customer u-1 has password
+        cursor.execute("""
+            UPDATE users
+            SET role = 'customer', password = COALESCE(NULLIF(password, ''), '123456')
+            WHERE id = 'u-1'
         """)
 
         # Sync joined_date for active accounts to accurate launch date
@@ -786,7 +809,7 @@ def get_user_by_phone(phone: str) -> Optional[Dict[str, Any]]:
             return dict(r)
     return None
 
-def register_user(name: str, phone: str, address: str, city: str, email: Optional[str] = None) -> Dict[str, Any]:
+def register_user(name: str, phone: str, address: str, city: str, email: Optional[str] = None, password: str = "123456") -> Dict[str, Any]:
     existing = get_user_by_phone(phone)
     if existing:
         raise ValueError("A user with this mobile number is already registered.")
@@ -800,12 +823,109 @@ def register_user(name: str, phone: str, address: str, city: str, email: Optiona
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, 'Customer Verified', ?, 5.0, 'verified')
-        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, joined))
+            INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status, password, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, 'Customer Verified', ?, 5.0, 'verified', ?, 'customer')
+        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, joined, password))
         conn.commit()
         conn.close()
         return get_user_profile(uid)
+
+def get_user_by_identifier(identifier: str) -> Optional[Dict[str, Any]]:
+    ident = identifier.strip().lower()
+    clean_digits = re.sub(r'\D', '', ident)
+    if len(clean_digits) > 10 and clean_digits.startswith('91'):
+        clean_digits = clean_digits[2:]
+
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM users").fetchall()
+    conn.close()
+
+    for r in rows:
+        d = dict(r)
+        u_id = (d.get("id") or "").lower()
+        u_name = (d.get("name") or "").lower()
+        u_email = (d.get("email") or "").lower()
+        u_phone = re.sub(r'\D', '', d.get("phone") or '')
+        if len(u_phone) > 10 and u_phone.startswith('91'):
+            u_phone = u_phone[2:]
+
+        if ident in ["admin", "admin-1"] and (u_id in ["admin-1", "admin"] or d.get("role") == "admin" or u_name == "admin"):
+            return d
+        if ident and (ident == u_id or ident == u_email or ident == u_name):
+            return d
+        if clean_digits and u_phone and (clean_digits == u_phone or clean_digits in u_phone):
+            return d
+
+    return None
+
+def admin_create_user(name: str, phone: str, password: str, address: str, city: str, email: Optional[str] = None, role: str = "customer") -> Dict[str, Any]:
+    existing = get_user_by_phone(phone)
+    if existing:
+        raise ValueError(f"User with phone {phone} already exists.")
+    uid = f"u-{uuid.uuid4().hex[:6]}"
+    mem_num = random.randint(10000, 99999)
+    member_id = f"WM-USER-{mem_num}"
+    def_photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" if role != "admin" else "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+    joined = "September 14, 2026"
+    acc_type = "System Administrator" if role == "admin" else "Customer Verified"
+
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status, password, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, 5.0, 'verified', ?, ?)
+        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, acc_type, joined, password, role))
+        conn.commit()
+        conn.close()
+        return get_user_profile(uid)
+
+def admin_update_user(user_id: str, name: str, phone: str, address: str, city: str, email: Optional[str] = None, password: Optional[str] = None, role: Optional[str] = None) -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        row = cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            conn.close()
+            raise ValueError(f"User {user_id} not found.")
+
+        current = dict(row)
+        new_name = name.strip() if name else current["name"]
+        new_phone = phone.strip() if phone else current["phone"]
+        new_addr = address.strip() if address is not None else current["address"]
+        new_city = city.strip() if city is not None else current["city"]
+        new_email = email.strip() if email is not None else current["email"]
+        new_pass = password.strip() if password else current.get("password", "123456")
+        new_role = role.strip() if role else current.get("role", "customer")
+        acc_type = "System Administrator" if new_role == "admin" else "Customer Verified"
+
+        cursor.execute("""
+            UPDATE users
+            SET name = ?, phone = ?, address = ?, city = ?, email = ?, password = ?, role = ?, account_type = ?
+            WHERE id = ?
+        """, (new_name, new_phone, new_addr, new_city, new_email, new_pass, new_role, acc_type, user_id))
+        conn.commit()
+        conn.close()
+        return get_user_profile(user_id)
+
+def admin_delete_user(user_id: str) -> bool:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        row = cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            conn.close()
+            raise ValueError(f"User {user_id} not found.")
+
+        u = dict(row)
+        if u.get("id") == "admin-1" or u.get("phone") == "7878193644" or u.get("name") == "admin":
+            conn.close()
+            raise ValueError("Primary System Administrator cannot be deleted.")
+
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+        conn.close()
+        return True
 
 def report_booking_dispute(booking_id: str, worker_id: str, reason: str, rating: int, refund_action: str = "refund_wallet") -> Dict[str, Any]:
     with _lock:

@@ -61,6 +61,16 @@ const I18N = {
     navPayments: "Payments",
     navAccount: "My Account",
     navAdmin: "4 Modules",
+    authLoginTab: "Login",
+    authRegisterTab: "Register",
+    authIdentifierLabel: "Mobile Number / ID",
+    authPasswordLabel: "Password",
+    adminUsersHeader: "User Accounts Management",
+    btnAddUser: "Add New User",
+    btnSaveUser: "Save User Details",
+    editUserTitle: "Edit User Account",
+    addUserTitle: "Add New User",
+    labelRole: "Account Role",
     backToHome: "Back to Home",
     menuAdminConsole: "4 Core Service Modules & Base Rates",
     menuDatabase: "Project Database & Records Explorer",
@@ -195,6 +205,16 @@ const I18N = {
     navPayments: "भुगतान",
     navAccount: "मेरा खाता",
     navAdmin: "4 मॉड्यूल",
+    authLoginTab: "लॉगिन",
+    authRegisterTab: "पंजीकरण",
+    authIdentifierLabel: "मोबाइल नंबर / आईडी",
+    authPasswordLabel: "पासवर्ड",
+    adminUsersHeader: "उपयोगकर्ता खाता प्रबंधन",
+    btnAddUser: "नया उपयोगकर्ता जोड़ें",
+    btnSaveUser: "उपयोगकर्ता विवरण सहेजें",
+    editUserTitle: "उपयोगकर्ता खाता संपादित करें",
+    addUserTitle: "नया उपयोगकर्ता जोड़ें",
+    labelRole: "खाता भूमिका",
     backToHome: "मुख्य पृष्ठ पर वापस जाएं",
     menuAdminConsole: "4 मुख्य सेवा मॉड्यूल एवं दरें",
     menuDatabase: "डेटाबेस एवं प्रोजेक्ट रिकॉर्ड्स",
@@ -435,13 +455,11 @@ function checkUserSession() {
 function switchAuthTab(tab) {
   const tabCust = document.getElementById("authTabCustomer");
   const tabReg = document.getElementById("authTabCustomerRegister");
-  const tabAdmin = document.getElementById("authTabAdmin");
   const formCust = document.getElementById("formCustomerLogin");
   const formReg = document.getElementById("formCustomerRegister");
-  const formAdmin = document.getElementById("formAdminLogin");
 
-  [tabCust, tabReg, tabAdmin].forEach(t => t && t.classList.remove("active"));
-  [formCust, formReg, formAdmin].forEach(f => f && (f.style.display = "none"));
+  [tabCust, tabReg].forEach(t => t && t.classList.remove("active"));
+  [formCust, formReg].forEach(f => f && (f.style.display = "none"));
 
   if (tab === "customer" || tab === "login") {
     if (tabCust) tabCust.classList.add("active");
@@ -449,9 +467,25 @@ function switchAuthTab(tab) {
   } else if (tab === "register") {
     if (tabReg) tabReg.classList.add("active");
     if (formReg) formReg.style.display = "block";
-  } else if (tab === "admin") {
-    if (tabAdmin) tabAdmin.classList.add("active");
-    if (formAdmin) formAdmin.style.display = "block";
+  }
+}
+
+function togglePasswordVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (!input) return;
+  if (input.type === "password") {
+    input.type = "text";
+    if (icon) {
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    }
+  } else {
+    input.type = "password";
+    if (icon) {
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
+    }
   }
 }
 
@@ -716,6 +750,7 @@ function switchTab(tabId) {
     renderAdminModulesRates();
     renderAdminBanksDashboard();
     renderAdminFinancials();
+    renderAdminUsers();
   }
   if (tabId === "home") {
     renderCategories();
@@ -772,6 +807,7 @@ async function loadInitialData() {
     renderAdminModulesRates();
     renderAdminBanksDashboard();
     renderAdminFinancials();
+    renderAdminUsers();
     applyTranslations();
 
     if (state.session && state.session.role === "admin") {
@@ -2385,6 +2421,208 @@ async function submitBookingDispute(event) {
       "success"
     );
     await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+// ----------------- Admin User Accounts Management ----------------- //
+
+async function renderAdminUsers() {
+  const container = document.getElementById("adminUsersListContainer");
+  if (!container) return;
+  const isHi = state.lang === "hi";
+
+  try {
+    const res = await fetch("/api/admin/users");
+    const users = await res.json();
+    state.adminUsers = users;
+
+    if (!users || users.length === 0) {
+      container.innerHTML = `<div style="padding:16px; text-align:center; color:#64748b; font-size:12px;">${isHi ? "कोई उपयोगकर्ता खाता नहीं मिला।" : "No user accounts found."}</div>`;
+      return;
+    }
+
+    container.innerHTML = users.map(u => {
+      const isAdm = u.role === "admin" || u.id === "admin-1";
+      const maskedPass = u.password ? (u.password.length > 2 ? u.password.slice(0, 1) + "••••" + u.password.slice(-1) : "••••••") : "••••••";
+
+      return `
+        <div class="admin-user-card" id="admin-user-row-${u.id}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="${u.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid ${isAdm ? '#1e40af' : '#10b981'};" alt="${u.name}" />
+            <div>
+              <div style="font-weight:800; font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>${u.name}</span>
+                <span style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; background:${isAdm ? '#dbeafe' : '#dcfce7'}; color:${isAdm ? '#1e40af' : '#15803d'};">
+                  ${isAdm ? (isHi ? 'व्यवस्थापक' : 'ADMIN') : (isHi ? 'ग्राहक' : 'CUSTOMER')}
+                </span>
+              </div>
+              <div style="font-size:12px; color:#475569; margin-top:2px;">
+                <i class="fa-solid fa-phone" style="font-size:10px; color:#64748b;"></i> ${u.phone}
+                <span style="margin:0 4px; color:#cbd5e1;">•</span>
+                <i class="fa-solid fa-key" style="font-size:10px; color:#d97706;"></i> <code>${maskedPass}</code>
+              </div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                ${u.address || u.city ? `${u.address || ''}, ${u.city || ''}` : (isHi ? 'कोई पता दर्ज नहीं' : 'No address set')}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="btn-edit-user-trigger" onclick="openAdminUserModal('${u.id}')" title="${isHi ? 'विवरण संपादित करें' : 'Edit User'}" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:12px; color:#1e40af; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <i class="fa-solid fa-pen-to-square"></i> <span>${isHi ? 'संपादित करें' : 'Edit'}</span>
+            </button>
+            ${!isAdm && u.id !== 'admin-1' ? `
+              <button type="button" class="btn-delete-user-trigger" onclick="adminDeleteUser('${u.id}')" title="${isHi ? 'खाता हटाएं' : 'Delete User'}" style="background:#fee2e2; border:1px solid #fca5a5; border-radius:6px; padding:6px 10px; font-size:12px; color:#b91c1c; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    console.error("Error rendering admin users:", err);
+  }
+}
+
+function openAdminUserModal(userId) {
+  const modal = document.getElementById("modalAdminUserForm");
+  if (!modal) return;
+  const isHi = state.lang === "hi";
+
+  const titleEl = document.getElementById("adminUserModalTitle");
+  const idInput = document.getElementById("adminUserFormId");
+  const nameInput = document.getElementById("adminUserFormName");
+  const phoneInput = document.getElementById("adminUserFormPhone");
+  const passInput = document.getElementById("adminUserFormPassword");
+  const addrInput = document.getElementById("adminUserFormAddress");
+  const cityInput = document.getElementById("adminUserFormCity");
+  const emailInput = document.getElementById("adminUserFormEmail");
+  const roleInput = document.getElementById("adminUserFormRole");
+
+  if (userId) {
+    const user = (state.adminUsers || []).find(u => u.id === userId);
+    if (!user) return;
+    if (titleEl) titleEl.textContent = isHi ? "उपयोगकर्ता खाता संपादित करें" : "Edit User Account";
+    if (idInput) idInput.value = user.id;
+    if (nameInput) nameInput.value = user.name || "";
+    if (phoneInput) phoneInput.value = (user.phone || "").replace(/[^0-9]/g, "").slice(-10);
+    if (passInput) {
+      passInput.value = user.password || "";
+      passInput.placeholder = isHi ? "नया पासवर्ड दर्ज करें (न्यूनतम 6 अक्षर)" : "Enter new password (min 6 chars)";
+    }
+    if (addrInput) addrInput.value = user.address || "";
+    if (cityInput) cityInput.value = user.city || "";
+    if (emailInput) emailInput.value = user.email || "";
+    if (roleInput) roleInput.value = user.role || (user.id === "admin-1" ? "admin" : "customer");
+  } else {
+    if (titleEl) titleEl.textContent = isHi ? "नया उपयोगकर्ता जोड़ें" : "Add New User";
+    if (idInput) idInput.value = "";
+    if (nameInput) nameInput.value = "";
+    if (phoneInput) phoneInput.value = "";
+    if (passInput) {
+      passInput.value = "";
+      passInput.placeholder = isHi ? "पासवर्ड बनाएं (न्यूनतम 6 अक्षर)" : "Create password (min 6 chars)";
+      passInput.required = true;
+    }
+    if (addrInput) addrInput.value = "";
+    if (cityInput) cityInput.value = "";
+    if (emailInput) emailInput.value = "";
+    if (roleInput) roleInput.value = "customer";
+  }
+
+  modal.classList.add("active");
+}
+
+async function handleAdminSaveUser(event) {
+  if (event) event.preventDefault();
+  const isHi = state.lang === "hi";
+
+  const userId = (document.getElementById("adminUserFormId").value || "").trim();
+  const name = (document.getElementById("adminUserFormName").value || "").trim();
+  const phone = (document.getElementById("adminUserFormPhone").value || "").trim();
+  const password = (document.getElementById("adminUserFormPassword").value || "").trim();
+  const address = (document.getElementById("adminUserFormAddress").value || "").trim();
+  const city = (document.getElementById("adminUserFormCity").value || "").trim();
+  const email = (document.getElementById("adminUserFormEmail").value || "").trim();
+  const role = document.getElementById("adminUserFormRole").value;
+
+  if (!name) {
+    showToast(isHi ? "कृपया पूरा नाम दर्ज करें।" : "Please enter full name.", "error");
+    return;
+  }
+
+  const cleanDigits = phone.replace(/[^0-9]/g, "");
+  if (cleanDigits.length !== 10) {
+    showToast(isHi ? "मोबाइल नंबर ठीक 10 अंकों का होना चाहिए।" : "Mobile number must be exactly 10 digits.", "error");
+    return;
+  }
+
+  if (password && password.length < 6) {
+    showToast(isHi ? "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।" : "Password must be at least 6 characters.", "error");
+    return;
+  }
+
+  try {
+    let res;
+    if (userId) {
+      // Update existing user
+      res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone: cleanDigits, password: password || undefined, address, city, email: email || undefined, role })
+      });
+    } else {
+      // Create new user
+      if (!password || password.length < 6) {
+        showToast(isHi ? "नए उपयोगकर्ता के लिए कम से कम 6 अक्षरों का पासवर्ड आवश्यक है।" : "Password of at least 6 characters is required for new user.", "error");
+        return;
+      }
+      res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone: cleanDigits, password, address, city, email: email || undefined, role })
+      });
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || (isHi ? "सहेजने में त्रुटि" : "Failed to save user details"));
+
+    closeModal("modalAdminUserForm");
+    showToast(isHi ? "उपयोगकर्ता विवरण सफलतापूर्वक सहेजा गया!" : "User details saved successfully!", "success");
+
+    // If edited user is the current active session user, update session immediately
+    if (state.session && state.session.user && (state.session.user.id === userId || (data.user && state.session.user.id === data.user.id))) {
+      state.session.user = data.user || Object.assign(state.session.user, { name, phone: cleanDigits, address, city, email });
+      localStorage.setItem("workmate_session", JSON.stringify(state.session));
+      state.userProfile = state.session.user;
+      renderProfile();
+      applyTranslations();
+    }
+
+    await renderAdminUsers();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function adminDeleteUser(userId) {
+  const isHi = state.lang === "hi";
+  if (!confirm(isHi ? "क्या आप वाकई इस उपयोगकर्ता खाते को हटाना चाहते हैं?" : "Are you sure you want to delete this user account?")) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/users/${encodeURIComponent(userId)}`, {
+      method: "DELETE"
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || (isHi ? "हटाने में त्रुटि" : "Failed to delete user"));
+
+    showToast(isHi ? "उपयोगकर्ता खाता हटा दिया गया है।" : "User account deleted successfully.", "success");
+    await renderAdminUsers();
   } catch (err) {
     showToast(err.message, "error");
   }

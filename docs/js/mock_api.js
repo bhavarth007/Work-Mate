@@ -83,22 +83,26 @@
         account_type: "Customer Premium",
         joined_date: "September 14, 2026",
         trust_score: 4.9,
-        kyc_status: "verified"
+        kyc_status: "verified",
+        password: "123456",
+        role: "customer"
       },
       {
         id: "admin-1",
         name: "admin",
         phone: "7878193644",
         email: "bhavarthhapani7@gmail.com",
-        address: "",
-        city: "",
+        address: "WorkMate Admin HQ",
+        city: "Surat, Gujarat",
         photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
         aadhaar_masked: "",
         member_id: "WM-ADMIN-001",
         account_type: "System Administrator",
         joined_date: "September 14, 2026",
         trust_score: 5.0,
-        kyc_status: "verified"
+        kyc_status: "verified",
+        password: "admin123",
+        role: "admin"
       }
     ],
     wallet: { balance: 13000.0, currency: "INR", symbol: "₹" },
@@ -126,10 +130,16 @@
           return parsed;
         }
         // Upgrade existing local storage with updated ratings and metadata
-        parsed.schemaVersion = 2;
+        parsed.schemaVersion = 3;
         parsed.categories = DEFAULT_DB.categories;
         if (!parsed.services || !parsed.services[0].desc_en) {
           parsed.services = DEFAULT_DB.services;
+        }
+        if (parsed.users) {
+          parsed.users.forEach(u => {
+            if (!u.password) u.password = (u.role === 'admin' || u.id === 'admin-1') ? 'admin123' : '123456';
+            if (!u.role) u.role = (u.id === 'admin-1' || u.phone === '7878193644') ? 'admin' : 'customer';
+          });
         }
         localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
         return parsed;
@@ -165,73 +175,167 @@
     const body = options.body ? (typeof options.body === "string" ? JSON.parse(options.body) : options.body) : {};
     const db = loadLocalDb();
 
-    // 1. Auth Login
+    // 1. Unified Auth Login (Single entry point for Admin & Customers)
     if (pathname === "/api/auth/login" && method === "POST") {
-      const { role, identifier, password } = body;
-      const idStr = (identifier || "").trim();
+      const idStr = (body.identifier || "").trim();
+      const pass = (body.password || "").trim();
+      const targetPhone = cleanPhone(idStr);
 
-      if (role === "admin" || idStr.toLowerCase() === "admin") {
-        if (password === "admin123" || !password) {
-          const adminUser = db.users.find(u => u.id === "admin-1") || db.users[1];
-          return jsonResponse({
-            success: true,
-            token: "wm_admin_sec_token_9901",
-            role: "admin",
-            user: adminUser
-          });
-        } else {
-          return jsonResponse({ detail: "Invalid Admin Credentials (Default: admin / admin123)" }, 401);
-        }
+      let user = null;
+      if (idStr.toLowerCase() === "admin") {
+        user = db.users.find(u => u.id === "admin-1" || u.role === "admin" || (u.name || "").toLowerCase() === "admin");
+      } else if (targetPhone) {
+        user = db.users.find(u => cleanPhone(u.phone) === targetPhone);
+      }
+      if (!user) {
+        user = db.users.find(u => (u.id || "").toLowerCase() === idStr.toLowerCase() || (u.email || "").toLowerCase() === idStr.toLowerCase());
       }
 
-      // Customer Phone Login
-      const targetPhone = cleanPhone(idStr);
-      const user = db.users.find(u => cleanPhone(u.phone) === targetPhone);
       if (!user) {
         return jsonResponse({
-          detail: "Account not found with this mobile number. Please register first to create an account."
+          detail: "Account not found with this mobile number or ID. Please register first to create an account."
         }, 404);
       }
+
+      const expectedPass = user.password || (user.role === "admin" ? "admin123" : "123456");
+      if (pass !== expectedPass) {
+        return jsonResponse({
+          detail: "Incorrect password. Please verify and try again."
+        }, 401);
+      }
+
+      const role = user.role || (user.id === "admin-1" || idStr.toLowerCase() === "admin" || cleanPhone(user.phone) === "7878193644" ? "admin" : "customer");
       return jsonResponse({
         success: true,
-        token: `wm_cust_token_${user.id}`,
-        role: "customer",
+        token: role === "admin" ? "wm_admin_sec_token_9901" : `wm_cust_token_${user.id}`,
+        role: role,
         user: user
       });
     }
 
-    // 2. Auth Register
+    // 2. Auth Register (With 10-digit phone & min 6-char password)
     if (pathname === "/api/auth/register" && method === "POST") {
       const targetPhone = cleanPhone(body.phone);
-      let user = db.users.find(u => cleanPhone(u.phone) === targetPhone);
-      if (user) {
-        return jsonResponse({ detail: "An account with this phone number already exists. Please login." }, 400);
+      if (targetPhone.length !== 10) {
+        return jsonResponse({ detail: "Mobile number must be exactly 10 digits." }, 400);
       }
+      const pass = (body.password || "").trim();
+      if (!pass || pass.length < 6) {
+        return jsonResponse({ detail: "Password must be at least 6 characters." }, 400);
+      }
+
+      let existing = db.users.find(u => cleanPhone(u.phone) === targetPhone);
+      if (existing) {
+        return jsonResponse({ detail: "An account with this mobile number already exists. Please login." }, 400);
+      }
+
       const newId = "u-" + Math.random().toString(16).slice(2, 8);
-      user = {
+      const newUser = {
         id: newId,
         name: body.name.trim(),
-        phone: body.phone.trim(),
-        address: body.address || "",
-        city: body.city || "",
-        email: body.email || null,
+        phone: targetPhone,
+        email: (body.email || "").trim(),
+        address: (body.address || "").trim(),
+        city: (body.city || "").trim(),
         photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
         aadhaar_masked: "•••• •••• " + Math.floor(1000 + Math.random() * 9000),
         member_id: "WM-USER-" + Math.floor(10000 + Math.random() * 90000),
-        account_type: "Customer Verified",
+        account_type: "Customer Premium",
         joined_date: "September 14, 2026",
         trust_score: 5.0,
-        kyc_status: "verified"
+        kyc_status: "verified",
+        password: pass,
+        role: "customer"
       };
-      db.users.push(user);
+      db.users.unshift(newUser);
       saveLocalDb(db);
       return jsonResponse({
         success: true,
-        token: `wm_cust_token_${user.id}`,
+        token: `wm_cust_token_${newUser.id}`,
         role: "customer",
-        user: user,
+        user: newUser,
         message: "Account registered successfully! Welcome to WorkMate."
       });
+    }
+
+    // 2b. Admin User Management Endpoints
+    if (pathname === "/api/admin/users" && method === "GET") {
+      return jsonResponse(db.users);
+    }
+    if (pathname === "/api/admin/users" && method === "POST") {
+      const phoneDigits = cleanPhone(body.phone);
+      if (phoneDigits.length !== 10) {
+        return jsonResponse({ detail: "Mobile number must be exactly 10 digits." }, 400);
+      }
+      if (!body.password || body.password.length < 6) {
+        return jsonResponse({ detail: "Password must be at least 6 characters." }, 400);
+      }
+      if (db.users.some(u => cleanPhone(u.phone) === phoneDigits)) {
+        return jsonResponse({ detail: "A user with this mobile number already exists." }, 400);
+      }
+
+      const newId = "u-" + Math.random().toString(16).slice(2, 8);
+      const isAdm = body.role === "admin";
+      const createdUser = {
+        id: newId,
+        name: body.name.trim(),
+        phone: phoneDigits,
+        email: (body.email || "").trim(),
+        address: (body.address || "").trim(),
+        city: (body.city || "").trim(),
+        photo: isAdm ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+        aadhaar_masked: "",
+        member_id: isAdm ? "WM-ADMIN-" + Math.floor(100 + Math.random() * 900) : "WM-USER-" + Math.floor(10000 + Math.random() * 90000),
+        account_type: isAdm ? "System Administrator" : "Customer Verified",
+        joined_date: "September 14, 2026",
+        trust_score: 5.0,
+        kyc_status: "verified",
+        password: body.password.trim(),
+        role: isAdm ? "admin" : "customer"
+      };
+      db.users.unshift(createdUser);
+      saveLocalDb(db);
+      return jsonResponse({ success: true, user: createdUser });
+    }
+    if (pathname.startsWith("/api/admin/users/") && method === "PUT") {
+      const userId = pathname.replace("/api/admin/users/", "");
+      const idx = db.users.findIndex(u => u.id === userId);
+      if (idx === -1) return jsonResponse({ detail: "User not found" }, 404);
+
+      const phoneDigits = cleanPhone(body.phone || db.users[idx].phone);
+      if (phoneDigits.length !== 10) {
+        return jsonResponse({ detail: "Mobile number must be exactly 10 digits." }, 400);
+      }
+      if (body.password && body.password.length < 6) {
+        return jsonResponse({ detail: "Password must be at least 6 characters." }, 400);
+      }
+
+      const isAdm = (body.role || db.users[idx].role) === "admin";
+      db.users[idx].name = body.name ? body.name.trim() : db.users[idx].name;
+      db.users[idx].phone = phoneDigits;
+      if (body.address !== undefined) db.users[idx].address = body.address.trim();
+      if (body.city !== undefined) db.users[idx].city = body.city.trim();
+      if (body.email !== undefined) db.users[idx].email = body.email.trim();
+      if (body.password) db.users[idx].password = body.password.trim();
+      if (body.role) {
+        db.users[idx].role = isAdm ? "admin" : "customer";
+        db.users[idx].account_type = isAdm ? "System Administrator" : "Customer Verified";
+      }
+
+      saveLocalDb(db);
+      return jsonResponse({ success: true, user: db.users[idx] });
+    }
+    if (pathname.startsWith("/api/admin/users/") && method === "DELETE") {
+      const userId = pathname.replace("/api/admin/users/", "");
+      if (userId === "admin-1") {
+        return jsonResponse({ detail: "Primary System Administrator cannot be deleted." }, 400);
+      }
+      const initialLen = db.users.length;
+      db.users = db.users.filter(u => u.id !== userId);
+      if (db.users.length === initialLen) return jsonResponse({ detail: "User not found" }, 404);
+
+      saveLocalDb(db);
+      return jsonResponse({ success: true, deleted_id: userId });
     }
 
     // 3. User Profile

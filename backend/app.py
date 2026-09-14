@@ -29,7 +29,11 @@ from .database import (
     get_user_by_phone, register_user, report_booking_dispute,
     update_service_rate, get_admin_banks, switch_primary_bank,
     get_admin_financial_stats, get_system_config, set_platform_charge_percent,
-    get_all_users
+    get_all_users, get_user_by_identifier, admin_create_user,
+    admin_update_user, admin_delete_user
+)
+from .models import (
+    AdminUserCreateRequest, AdminUserUpdateRequest
 )
 
 # Initialize database schema and seeds
@@ -362,37 +366,30 @@ def change_avatar(payload: UserAvatarUpdate, user_id: Optional[str] = None):
 
 @app.post("/api/auth/login")
 def login(payload: AuthLoginRequest):
-    ident = payload.identifier.strip().lower()
-    valid_admins = ["admin", "admin@workmate.in", "bhavarthhapani7@gmail.com"]
-    if payload.role == "admin" or ident in valid_admins:
-        # Admin authentication
-        if ident in valid_admins and payload.password == "admin123":
-            admin_prof = get_user_profile("admin-1")
-            return {
-                "success": True,
-                "token": "wm_admin_sec_token_9901",
-                "role": "admin",
-                "user": admin_prof
-            }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Admin ID or Password. (Default: admin / admin123)"
-            )
-    else:
-        # Dynamic Customer Phone login
-        user = get_user_by_phone(ident)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Account not found with this mobile number. Please register first to create an account."
-            )
-        return {
-            "success": True,
-            "token": f"wm_cust_token_{user['id']}",
-            "role": "customer",
-            "user": user
-        }
+    ident = payload.identifier.strip()
+    user = get_user_by_identifier(ident)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Account not found with this mobile number or ID. Please register first to create an account."
+        )
+
+    user_pass = user.get("password") or ("admin123" if (user.get("role") == "admin" or ident.lower() == "admin") else "123456")
+    if payload.password != user_pass:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect password. Please verify and try again."
+        )
+
+    user_role = user.get("role") or ("admin" if (user.get("id") == "admin-1" or ident.lower() == "admin" or user.get("phone") == "7878193644") else "customer")
+    token = "wm_admin_sec_token_9901" if user_role == "admin" else f"wm_cust_token_{user['id']}"
+
+    return {
+        "success": True,
+        "token": token,
+        "role": user_role,
+        "user": user
+    }
 
 @app.post("/api/auth/register")
 def register(payload: CustomerRegisterRequest):
@@ -402,7 +399,8 @@ def register(payload: CustomerRegisterRequest):
             phone=payload.phone.strip(),
             address=(payload.address or "").strip(),
             city=(payload.city or "").strip(),
-            email=(payload.email or "").strip() or None
+            email=(payload.email or "").strip() or None,
+            password=payload.password.strip()
         )
         return {
             "success": True,
@@ -413,6 +411,53 @@ def register(payload: CustomerRegisterRequest):
         }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+# ----------------- Admin User Management Endpoints ----------------- #
+
+@app.get("/api/admin/users")
+def list_admin_users():
+    return get_all_users()
+
+@app.post("/api/admin/users")
+def create_admin_user(payload: AdminUserCreateRequest):
+    try:
+        new_u = admin_create_user(
+            name=payload.name.strip(),
+            phone=payload.phone.strip(),
+            password=payload.password.strip(),
+            address=(payload.address or "").strip(),
+            city=(payload.city or "").strip(),
+            email=(payload.email or "").strip() or None,
+            role=payload.role
+        )
+        return {"success": True, "user": new_u}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/api/admin/users/{user_id}")
+def update_admin_user(user_id: str, payload: AdminUserUpdateRequest):
+    try:
+        updated_u = admin_update_user(
+            user_id=user_id,
+            name=payload.name.strip(),
+            phone=payload.phone.strip(),
+            address=(payload.address or "").strip(),
+            city=(payload.city or "").strip(),
+            email=(payload.email or "").strip() or None,
+            password=payload.password.strip() if payload.password else None,
+            role=payload.role
+        )
+        return {"success": True, "user": updated_u}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/admin/users/{user_id}")
+def delete_admin_user(user_id: str):
+    try:
+        success = admin_delete_user(user_id)
+        return {"success": success, "deleted_id": user_id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/bookings/dispute")
 def dispute_booking(payload: BookingDisputeRequest):

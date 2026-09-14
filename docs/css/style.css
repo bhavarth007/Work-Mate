@@ -2093,5 +2093,33 @@ body {
   justify-content: space-between;
 }
 
+/* Admin User Management Cards */
+.admin-users-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
+.admin-user-card {
+  transition: all 0.2s ease;
+}
 
+.admin-user-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.btn-add-admin-user:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.btn-edit-user-trigger:hover {
+  background: #e2e8f0;
+  color: #1e3a8a;
+}
+
+.btn-delete-user-trigger:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
