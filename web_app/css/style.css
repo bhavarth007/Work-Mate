@@ -2183,6 +2183,18 @@ body {
   border: 1px solid #bbf7d0;
 }
 
+.user-role-badge.role-worker {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.user-role-badge.role-dalal {
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
 .btn-add-admin-user {
   background: #1a56db;
   color: #ffffff;

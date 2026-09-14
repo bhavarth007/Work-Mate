@@ -276,7 +276,29 @@
       }
 
       const newId = "u-" + Math.random().toString(16).slice(2, 8);
-      const isAdm = body.role === "admin";
+      const role = (body.role || "customer").toLowerCase();
+      const isAdm = role === "admin";
+      const isWorker = role === "worker";
+      const isDalal = role === "dalal" || role === "contractor";
+      
+      let accType = "Customer Verified";
+      let photoUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face";
+      let memPrefix = "WM-USER-";
+
+      if (isAdm) {
+        accType = "System Administrator";
+        photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face";
+        memPrefix = "WM-ADMIN-";
+      } else if (isWorker) {
+        accType = "Worker Partner";
+        photoUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+        memPrefix = "WM-WRK-";
+      } else if (isDalal) {
+        accType = "Labour Contractor / Dalal";
+        photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face";
+        memPrefix = "WM-DL-";
+      }
+
       const createdUser = {
         id: newId,
         name: body.name.trim(),
@@ -284,15 +306,15 @@
         email: (body.email || "").trim(),
         address: (body.address || "").trim(),
         city: (body.city || "").trim(),
-        photo: isAdm ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+        photo: photoUrl,
         aadhaar_masked: "",
-        member_id: isAdm ? "WM-ADMIN-" + Math.floor(100 + Math.random() * 900) : "WM-USER-" + Math.floor(10000 + Math.random() * 90000),
-        account_type: isAdm ? "System Administrator" : "Customer Verified",
+        member_id: memPrefix + Math.floor(10000 + Math.random() * 90000),
+        account_type: accType,
         joined_date: "September 14, 2026",
         trust_score: 5.0,
         kyc_status: "verified",
         password: body.password.trim(),
-        role: isAdm ? "admin" : "customer"
+        role: role
       };
       db.users.unshift(createdUser);
       saveLocalDb(db);
@@ -319,8 +341,12 @@
       if (body.email !== undefined) db.users[idx].email = body.email.trim();
       if (body.password) db.users[idx].password = body.password.trim();
       if (body.role) {
-        db.users[idx].role = isAdm ? "admin" : "customer";
-        db.users[idx].account_type = isAdm ? "System Administrator" : "Customer Verified";
+        const newRole = body.role.toLowerCase();
+        db.users[idx].role = newRole;
+        if (newRole === "admin") db.users[idx].account_type = "System Administrator";
+        else if (newRole === "worker") db.users[idx].account_type = "Worker Partner";
+        else if (newRole === "dalal" || newRole === "contractor") db.users[idx].account_type = "Labour Contractor / Dalal";
+        else db.users[idx].account_type = "Customer Verified";
       }
 
       saveLocalDb(db);

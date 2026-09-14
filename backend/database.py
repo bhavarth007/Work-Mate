@@ -867,7 +867,14 @@ def admin_create_user(name: str, phone: str, password: str, address: str, city: 
     member_id = f"WM-USER-{mem_num}"
     def_photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" if role != "admin" else "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
     joined = "September 14, 2026"
-    acc_type = "System Administrator" if role == "admin" else "Customer Verified"
+    if role == "admin":
+        acc_type = "System Administrator"
+    elif role == "worker":
+        acc_type = "Worker Partner"
+    elif role == "dalal":
+        acc_type = "Labour Contractor / Dalal"
+    else:
+        acc_type = "Customer Verified"
 
     with _lock:
         conn = get_connection()
@@ -897,7 +904,14 @@ def admin_update_user(user_id: str, name: str, phone: str, address: str, city: s
         new_email = email.strip() if email is not None else current["email"]
         new_pass = password.strip() if password else current.get("password", "123456")
         new_role = role.strip() if role else current.get("role", "customer")
-        acc_type = "System Administrator" if new_role == "admin" else "Customer Verified"
+        if new_role == "admin":
+            acc_type = "System Administrator"
+        elif new_role == "worker":
+            acc_type = "Worker Partner"
+        elif new_role == "dalal":
+            acc_type = "Labour Contractor / Dalal"
+        else:
+            acc_type = "Customer Verified"
 
         cursor.execute("""
             UPDATE users

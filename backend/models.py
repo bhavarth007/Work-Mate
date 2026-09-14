@@ -170,7 +170,7 @@ class UserAvatarUpdate(BaseModel):
 class AuthLoginRequest(BaseModel):
     identifier: str = Field(..., min_length=1)  # 10-digit phone or admin
     password: str = Field(..., min_length=6)
-    role: Optional[Literal["customer", "admin"]] = "customer"
+    role: Optional[Literal["customer", "worker", "dalal", "admin"]] = "customer"
     otp: Optional[str] = "1234"
 
 class ServiceRateUpdate(BaseModel):
@@ -191,7 +191,7 @@ class AdminUserCreateRequest(BaseModel):
     address: Optional[str] = ""
     city: Optional[str] = ""
     email: Optional[str] = None
-    role: Literal["customer", "admin"] = "customer"
+    role: Literal["customer", "worker", "dalal", "admin"] = "customer"
 
 class AdminUserUpdateRequest(BaseModel):
     name: str = Field(..., min_length=1)
@@ -200,7 +200,7 @@ class AdminUserUpdateRequest(BaseModel):
     address: Optional[str] = ""
     city: Optional[str] = ""
     email: Optional[str] = None
-    role: Literal["customer", "admin"] = "customer"
+    role: Literal["customer", "worker", "dalal", "admin"] = "customer"
 
 class BookingDisputeRequest(BaseModel):
     booking_id: str

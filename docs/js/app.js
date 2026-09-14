@@ -71,6 +71,10 @@ const I18N = {
     editUserTitle: "Edit User Account",
     addUserTitle: "Add New User",
     labelRole: "Account Role",
+    roleCustomer: "Customer",
+    roleWorker: "Worker",
+    roleDalal: "Contractor / Dalal (Thekedar)",
+    roleAdmin: "System Administrator",
     backToHome: "Back to Home",
     menuAdminConsole: "4 Core Service Modules & Base Rates",
     menuDatabase: "Project Database & Records Explorer",
@@ -215,6 +219,10 @@ const I18N = {
     editUserTitle: "उपयोगकर्ता खाता संपादित करें",
     addUserTitle: "नया उपयोगकर्ता जोड़ें",
     labelRole: "खाता भूमिका",
+    roleCustomer: "ग्राहक",
+    roleWorker: "कारीगर / मजदूर",
+    roleDalal: "ठेकेदार / दलाल",
+    roleAdmin: "व्यवस्थापक",
     backToHome: "मुख्य पृष्ठ पर वापस जाएं",
     menuAdminConsole: "4 मुख्य सेवा मॉड्यूल एवं दरें",
     menuDatabase: "डेटाबेस एवं प्रोजेक्ट रिकॉर्ड्स",
@@ -2465,18 +2473,40 @@ async function renderAdminUsers() {
     }
 
     container.innerHTML = users.map(u => {
-      const isAdm = u.role === "admin" || u.id === "admin-1";
+      const role = (u.role || (u.id === "admin-1" ? "admin" : "customer")).toLowerCase();
+      const isAdm = role === "admin" || u.id === "admin-1";
+      const isWorker = role === "worker";
+      const isDalal = role === "dalal" || role === "contractor";
+      
+      let badgeClass = "role-customer";
+      let badgeText = isHi ? "ग्राहक" : "CUSTOMER";
+      let avatarBorder = "#10b981";
+
+      if (isAdm) {
+        badgeClass = "role-admin";
+        badgeText = isHi ? "व्यवस्थापक" : "ADMIN";
+        avatarBorder = "#2563eb";
+      } else if (isWorker) {
+        badgeClass = "role-worker";
+        badgeText = isHi ? "कारीगर" : "WORKER";
+        avatarBorder = "#f59e0b";
+      } else if (isDalal) {
+        badgeClass = "role-dalal";
+        badgeText = isHi ? "दलाल / ठेकेदार" : "DALAL / CONTRACTOR";
+        avatarBorder = "#8b5cf6";
+      }
+
       const maskedPass = u.password ? (u.password.length > 2 ? u.password.slice(0, 1) + "••••" + u.password.slice(-1) : "••••••") : "••••••";
 
       return `
         <div class="admin-user-card" id="admin-user-row-${u.id}">
           <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:240px;">
-            <img src="${u.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${isAdm ? '#2563eb' : '#10b981'}; box-shadow:0 1px 3px rgba(0,0,0,0.1);" alt="${u.name}" />
+            <img src="${u.photo || (isWorker ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face')}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${avatarBorder}; box-shadow:0 1px 3px rgba(0,0,0,0.1);" alt="${u.name}" />
             <div style="flex:1;">
               <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:8px;">
                 <span>${u.name}</span>
-                <span class="user-role-badge ${isAdm ? 'role-admin' : 'role-customer'}">
-                  ${isAdm ? (isHi ? 'व्यवस्थापक' : 'ADMIN') : (isHi ? 'ग्राहक' : 'CUSTOMER')}
+                <span class="user-role-badge ${badgeClass}">
+                  ${badgeText}
                 </span>
               </div>
               <div style="font-size:12px; color:#475569; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
