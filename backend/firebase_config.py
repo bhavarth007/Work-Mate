@@ -6,7 +6,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-FIREBASE_PROJECT_ID = "work-mate-eadb9"
+FIREBASE_PROJECT_ID = "work-mate-eadfb"
 
 # Potential credential key paths
 POSSIBLE_KEY_PATHS = [
