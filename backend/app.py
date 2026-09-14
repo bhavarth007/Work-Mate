@@ -15,7 +15,8 @@ from .models import (
     OTPVerifyRequest, BookingStatusUpdateRequest,
     WalletTransaction, WalletDepositRequest, WalletPayoutRequest,
     WorkerOnboardRequest, ReviewCreate, Review, UserProfileUpdate,
-    AuthLoginRequest, ServiceRateUpdate, UserAvatarUpdate
+    AuthLoginRequest, ServiceRateUpdate, UserAvatarUpdate,
+    CustomerRegisterRequest, BookingDisputeRequest
 )
 from .database import (
     init_db, get_categories, get_services, get_service_by_id,
@@ -25,6 +26,7 @@ from .database import (
     get_wallet, deposit_wallet, payout_wallet,
     get_transactions, get_reviews, create_review,
     get_user_profile, update_user_profile, update_user_avatar,
+    get_user_by_phone, register_user, report_booking_dispute,
     update_service_rate, get_admin_banks, switch_primary_bank,
     get_admin_financial_stats, get_system_config, set_platform_charge_percent
 )
@@ -351,14 +353,53 @@ def login(payload: AuthLoginRequest):
                 detail="Invalid Admin ID or Password. (Default: admin / admin123)"
             )
     else:
-        # Customer Phone login
-        profile = get_user_profile("u-1")
+        # Dynamic Customer Phone login
+        user = get_user_by_phone(ident)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found with this mobile number. Please register first to create an account."
+            )
         return {
             "success": True,
-            "token": "wm_cust_sec_token_4402",
+            "token": f"wm_cust_token_{user['id']}",
             "role": "customer",
-            "user": profile
+            "user": user
         }
+
+@app.post("/api/auth/register")
+def register(payload: CustomerRegisterRequest):
+    try:
+        user = register_user(
+            name=payload.name.strip(),
+            phone=payload.phone.strip(),
+            address=(payload.address or "").strip(),
+            city=(payload.city or "").strip(),
+            email=(payload.email or "").strip() or None
+        )
+        return {
+            "success": True,
+            "token": f"wm_cust_token_{user['id']}",
+            "role": "customer",
+            "user": user,
+            "message": "Account registered successfully! Welcome to WorkMate."
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+@app.post("/api/bookings/dispute")
+def dispute_booking(payload: BookingDisputeRequest):
+    try:
+        res = report_booking_dispute(
+            booking_id=payload.booking_id,
+            worker_id=payload.worker_id,
+            reason=payload.reason,
+            rating=payload.rating,
+            refund_action=payload.refund_action
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 # ----------------- Platform Configuration ----------------- #
 

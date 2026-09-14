@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WorkMate (वर्कमेट) | On-Demand Blue-Collar Labour Platform</title>
+  <title data-i18n="appHtmlTitle">WorkMate | On-Demand Blue-Collar Labour Platform</title>
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,54 +17,103 @@
   <!-- ================= AUTHENTICATION VIEW (When Logged Out) ================= -->
   <div id="view-auth" class="auth-wrapper" style="display:none;">
     <div class="auth-card-main">
+      <!-- Top Language Switcher in Auth Screen -->
+      <div class="auth-top-bar">
+        <button type="button" class="auth-lang-btn" onclick="toggleLanguage()" title="Switch Language">
+          <i class="fa-solid fa-language"></i>
+          <span id="authLangTag">हिन्दी</span>
+        </button>
+      </div>
+
       <div class="auth-header-logo">
         <div class="auth-logo-badge">
           <i class="fa-solid fa-users-gear"></i>
         </div>
-        <h2 style="font-size:22px; font-weight:800; color:#0f172a;">WorkMate <span style="font-size:16px; color:#1a56db;">(वर्कमेट)</span></h2>
-        <p style="font-size:13px; color:#64748b; margin-top:4px;">आपका भरोसेमंद लेबर साथी • On-Demand Platform</p>
+        <h2 style="font-size:22px; font-weight:800; color:#0f172a;" data-i18n="appName">WorkMate</h2>
+        <p style="font-size:13px; color:#64748b; margin-top:4px;" data-i18n="tagline">Your Trusted Labour Partner</p>
       </div>
 
-      <!-- Auth Role Switcher Tabs -->
+      <!-- Auth Role Switcher Tabs (Customer Login, Register, Admin) -->
       <div class="auth-tabs-row">
         <button id="authTabCustomer" class="auth-tab-item active" onclick="switchAuthTab('customer')">
-          <i class="fa-solid fa-user"></i> Customer Login
+          <i class="fa-solid fa-user"></i> <span data-i18n="authCustomerLoginTab">Customer Login</span>
+        </button>
+        <button id="authTabCustomerRegister" class="auth-tab-item" onclick="switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus"></i> <span data-i18n="authCustomerRegisterTab">Register Account</span>
         </button>
         <button id="authTabAdmin" class="auth-tab-item" onclick="switchAuthTab('admin')">
-          <i class="fa-solid fa-shield-halved"></i> Admin Console
+          <i class="fa-solid fa-shield-halved"></i> <span data-i18n="authAdminTab">Admin</span>
         </button>
       </div>
 
       <!-- Customer Login Form -->
       <form id="formCustomerLogin" onsubmit="handleCustomerLogin(event)">
         <div class="form-group">
-          <label class="form-label">Mobile Number (मोबाइल नंबर)</label>
+          <label class="form-label" data-i18n="authPhoneLabel">Mobile Number</label>
           <div style="display:flex; gap:8px;">
             <input type="text" value="+91" readonly style="width:65px; text-align:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-size:13px;" />
-            <input type="tel" id="loginPhoneInput" class="form-input" value="98765 43210" placeholder="Enter 10-digit phone" required style="flex:1;" />
+            <input type="tel" id="loginPhoneInput" class="form-input" placeholder="Enter 10-digit phone" required style="flex:1;" />
           </div>
         </div>
         <button type="submit" class="btn-submit-primary" style="margin-bottom:12px;">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i> Continue / Login as Customer
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> <span data-i18n="authLoginBtn">Login as Customer</span>
         </button>
+        <p style="font-size:12px; color:#64748b; text-align:center; margin-top:6px;">
+          <span data-i18n="newAccountPrompt">New to WorkMate?</span> 
+          <a href="javascript:void(0)" onclick="switchAuthTab('register')" style="color:#1d4ed8; font-weight:700; text-decoration:underline;" data-i18n="createAccountLink">Create an account</a>
+        </p>
+      </form>
+
+      <!-- Customer Register Form -->
+      <form id="formCustomerRegister" onsubmit="handleCustomerRegister(event)" style="display:none;">
+        <div class="form-group">
+          <label class="form-label" data-i18n="labelFullName">Full Name *</label>
+          <input type="text" id="registerNameInput" class="form-input" placeholder="Enter your full name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="authPhoneLabel">Mobile Number *</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" value="+91" readonly style="width:65px; text-align:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-size:13px;" />
+            <input type="tel" id="registerPhoneInput" class="form-input" placeholder="10-digit mobile number" required style="flex:1;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="labelAddress">Delivery / House Address *</label>
+          <input type="text" id="registerAddressInput" class="form-input" placeholder="House/Flat number, Street name" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="labelCityState">City &amp; State *</label>
+          <input type="text" id="registerCityInput" class="form-input" placeholder="e.g. Surat, Gujarat" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="labelEmail">Email Address (Optional)</label>
+          <input type="email" id="registerEmailInput" class="form-input" placeholder="e.g. user@example.com" />
+        </div>
+        <button type="submit" class="btn-submit-primary" style="margin-bottom:12px;">
+          <i class="fa-solid fa-user-plus"></i> <span data-i18n="authRegisterBtn">Register &amp; Continue</span>
+        </button>
+        <p style="font-size:12px; color:#64748b; text-align:center; margin-top:6px;">
+          <span data-i18n="alreadyAccountPrompt">Already have an account?</span> 
+          <a href="javascript:void(0)" onclick="switchAuthTab('customer')" style="color:#1d4ed8; font-weight:700; text-decoration:underline;" data-i18n="loginAccountLink">Login here</a>
+        </p>
       </form>
 
       <!-- Admin Login Form -->
       <form id="formAdminLogin" onsubmit="handleAdminLogin(event)" style="display:none;">
         <div class="form-group">
-          <label class="form-label">Admin ID (प्रशासक आईडी)</label>
+          <label class="form-label" data-i18n="adminIdLabel">Admin ID</label>
           <input type="text" id="adminIdInput" class="form-input" value="admin" placeholder="admin or admin@workmate.in" required />
         </div>
         <div class="form-group">
-          <label class="form-label">Admin Password (पासवर्ड)</label>
+          <label class="form-label" data-i18n="adminPasswordLabel">Admin Password</label>
           <input type="password" id="adminPasswordInput" class="form-input" value="admin123" placeholder="Enter admin password" required />
         </div>
         <button type="submit" class="btn-submit-primary" style="background:#1e3a8a; margin-bottom:12px;">
-          <i class="fa-solid fa-lock-open"></i> Login to Admin Console
+          <i class="fa-solid fa-lock-open"></i> <span data-i18n="adminLoginBtn">Login to Admin Console</span>
         </button>
       </form>
 
-      <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:12px;">
+      <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:14px;" data-i18n="sslSecurityFoot">
         Protected by 256-bit SSL Escrow Security • UIDAI Aadhaar Verified
       </div>
     </div>
@@ -82,12 +131,12 @@
             <span id="headerLocationText">Flat 402, Lotus Tower, Sector 14</span>
             <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
           </div>
-          <div class="user-greeting" id="userGreetingText">नमस्ते, रमेश!</div>
+          <div class="user-greeting" id="userGreetingText">Hello!</div>
         </div>
 
         <div class="header-right">
           <!-- Google Translate Style Language Switcher -->
-          <button class="google-translate-btn" onclick="toggleLanguage()" title="Change Language / भाषा बदलें">
+          <button class="google-translate-btn" onclick="toggleLanguage()" title="Change Language">
             <span class="translate-icon"><i class="fa-solid fa-language"></i></span>
             <span id="currentLangTag">हिन्दी</span>
             <span class="lang-indicator" id="currentLangIndicator">HI</span>
@@ -143,7 +192,7 @@
             <div>
               <span class="admin-section-tag"><i class="fa-solid fa-tags"></i> 4 Core Service Modules</span>
               <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;" data-i18n="adminModulesHeader">
-                Service Module Pricing &amp; Base Rates (सभी 4 मॉड्यूल की दरें)
+                <span data-i18n="adminModulesHeader">Service Module Pricing &amp; Base Rates</span>
               </h3>
             </div>
             <div style="display:flex; gap:6px;">
@@ -177,12 +226,12 @@
           <div class="admin-section-header" style="margin-top:24px;">
             <span class="admin-section-tag" style="background:#fef3c7; color:#b45309;"><i class="fa-solid fa-percent"></i> Platform Fee Settings</span>
             <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;">
-              WorkMate Platform Charge Configuration (प्लेटफॉर्म चार्ज)
+              <span data-i18n="adminChargeConfigHeader">WorkMate Platform Charge Configuration</span>
             </h3>
           </div>
           <div class="admin-module-card" style="padding:16px 18px;">
             <div style="font-size:13px; color:#475569; margin-bottom:12px; line-height:1.5;">
-              Configure the platform charge percentage applied to bookings. <strong>The percentage number is kept hidden from customers</strong> (they see only <code>Charge: ₹...</code> / <code>चार्ज: ₹...</code>). Default is 10%.
+              Configure the platform charge percentage applied to bookings. <strong>The percentage number is kept hidden from customers</strong> (they see only <code>Charge: ₹...</code>). Default is 10%.
             </div>
             <div style="display:flex; align-items:center; gap:10px; max-width:340px;">
               <div class="admin-input-group" style="padding:4px 10px;">
@@ -204,7 +253,7 @@
           <!-- Search Bar (Page 1 Mockup) -->
           <div class="search-wrapper">
             <i class="fa-solid fa-magnifying-glass search-icon-left"></i>
-            <input type="text" id="searchInput" class="search-input-box" placeholder="किसे ढूंढ रहे हैं? राजमिस्त्री..." />
+            <input type="text" id="searchInput" class="search-input-box" placeholder="Who are you looking for? Masons, Plumber, Catering..." data-i18n-placeholder="searchPlaceholder" />
             <div class="search-mic-right" onclick="showToast('Voice Search listening: Speak your requirement...')">
               <i class="fa-solid fa-microphone"></i>
             </div>
@@ -229,7 +278,7 @@
           <div class="trust-banner">
             <div class="trust-title">
               <i class="fa-solid fa-shield-halved"></i>
-              <span data-i18n="trustTitle">100% सत्यापन | सुरक्षित भुगतान</span>
+              <span data-i18n="trustTitle">100% ID Verified | Secure Escrow Payments</span>
             </div>
             <div class="trusted-partners-row">
               <span data-i18n="trustedPartners">Trusted Partners: UPI, Razorpay, UIDAI</span>
@@ -377,11 +426,20 @@
                 <i class="fa-solid fa-language" style="color:#2563eb;"></i>
                 <span data-i18n="menuLanguage">Language Selection</span>
               </div>
-              <span style="font-size:12px; color:var(--primary); font-weight:800;" id="menuLangIndicator">हिन्दी / English &gt;</span>
+              <span style="font-size:12px; color:var(--primary); font-weight:800;" id="menuLangIndicator">&gt;</span>
             </div>
 
-            <!-- Admin Console Trigger (Always Accessible) -->
-            <div class="account-menu-item" onclick="openAdminConsoleModal()">
+            <!-- Terms & Conditions (Escrow & Cancellation Policy) -->
+            <div class="account-menu-item" onclick="openTermsModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-file-shield" style="color:#0284c7;"></i>
+                <span data-i18n="menuTerms">Terms &amp; Conditions (Escrow Protection)</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
+            </div>
+
+            <!-- Admin Console Trigger (Hidden from regular customers, visible only to Admin) -->
+            <div class="account-menu-item" id="menuAdminConsoleItem" onclick="openAdminConsoleModal()" style="display:none;">
               <div class="account-item-left">
                 <i class="fa-solid fa-sliders" style="color:#eab308;"></i>
                 <span data-i18n="menuAdminConsole">Admin Rate &amp; Bank Console</span>
@@ -389,7 +447,7 @@
               <span class="admin-badge-pill"><i class="fa-solid fa-gear"></i> ADMIN</span>
             </div>
 
-            <div class="account-menu-item" onclick="openDatabaseModal()">
+            <div class="account-menu-item" id="menuDatabaseSyncItem" onclick="openDatabaseModal()" style="display:none;">
               <div class="account-item-left">
                 <i class="fa-solid fa-database" style="color:#0d9488;"></i>
                 <span data-i18n="menuDatabase">Database &amp; Cloud Sync (Firebase)</span>
@@ -473,13 +531,13 @@
   <div id="modalBooking" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3 id="modalBookingTitle">Add Work &amp; Book Labour (काम जोड़ें)</h3>
+        <h3 id="modalBookingTitle" data-i18n="modalBookingTitle">Add Work &amp; Book Labour</h3>
         <button class="btn-close-modal" onclick="closeModal('modalBooking')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
         <form onsubmit="submitBooking(event)">
           <div class="form-group">
-            <label class="form-label">Select Service / Trade (सेवा चयन)</label>
+            <label class="form-label" data-i18n="labelServiceTrade">Select Service / Trade</label>
             <select id="bookingServiceSelect" class="form-select" required></select>
           </div>
 
@@ -507,7 +565,7 @@
           <!-- Customer Custom Pay Offer Field -->
           <div class="form-group" id="customerOfferBudgetGroup">
             <label class="form-label" style="display:flex; justify-content:space-between;">
-              <span>Your Offered Work Pay (तय की गई मजदूरी / बजट)</span>
+              <span data-i18n="labelOfferedPay">Your Offered Work Pay (Budget)</span>
               <span style="font-weight:400; color:#64748b; font-size:11px;">(Optional Custom Offer)</span>
             </label>
             <div style="display:flex; align-items:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:0 10px;">
@@ -517,7 +575,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Booking Type (बुकिंग प्रकार)</label>
+            <label class="form-label" data-i18n="labelBookingType">Booking Type</label>
             <select id="bookingTypeSelect" class="form-select">
               <option value="instant">⚡ Instant Dispatch (15 Min Arrival)</option>
               <option value="scheduled">📅 Scheduled Booking (Choose Date/Time)</option>
@@ -525,7 +583,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Duration (कार्य समय)</label>
+            <label class="form-label" data-i18n="labelDuration">Duration</label>
             <select id="bookingDurationHours" class="form-select">
               <option value="4">Half Day (4 Hours)</option>
               <option value="8" selected>Full Day (8 Hours - Standard)</option>
@@ -534,12 +592,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Location / Address (पता)</label>
+            <label class="form-label" data-i18n="labelLocation">Location / Address</label>
             <input type="text" id="bookingAddressInput" class="form-input" value="Flat 402, Lotus Tower, Sector 14, Noida" required />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Task Specifications / Notes (काम का विवरण)</label>
+            <label class="form-label" data-i18n="labelTaskNotes">Task Specifications / Notes</label>
             <textarea id="bookingNotesInput" class="form-textarea" rows="2" placeholder="e.g. Masonry wall plastering, bring own trowel..."></textarea>
           </div>
 
@@ -616,43 +674,43 @@
           <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px dashed #cbd5e1;">
             <img id="editProfilePhotoPreview" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" alt="Avatar" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid #2563eb;" />
             <div style="flex:1;">
-              <div style="font-size:12px; font-weight:700; color:#0f172a;">Profile Photo (प्रोफाइल फोटो)</div>
+              <div style="font-size:12px; font-weight:700; color:#0f172a;"><span data-i18n="labelProfilePhoto">Profile Photo</span></div>
               <button type="button" class="btn-view-avatar-pill" onclick="triggerAvatarUpload(event)" style="margin-top:5px; padding:4px 10px; font-size:11px;">
-                <i class="fa-solid fa-camera"></i> Change Photo (फोटो बदलें)
+                <i class="fa-solid fa-camera"></i> <span data-i18n="btnChangePhoto">Change Photo</span>
               </button>
             </div>
           </div>
 
           <!-- Editable Fields -->
           <div class="form-group">
-            <label class="form-label">Full Name (पूरा नाम) *</label>
+            <label class="form-label" data-i18n="labelFullName">Full Name *</label>
             <input type="text" id="editProfileName" class="form-input" required />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Mobile Number (मोबाइल नंबर) *</label>
+            <label class="form-label" data-i18n="authPhoneLabel">Mobile Number *</label>
             <input type="tel" id="editProfilePhone" class="form-input" required />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Email Address (ईमेल)</label>
+            <label class="form-label" data-i18n="labelEmail">Email Address</label>
             <input type="email" id="editProfileEmail" class="form-input" />
           </div>
 
           <div class="form-group">
-            <label class="form-label">Delivery / House Address (पता)</label>
+            <label class="form-label" data-i18n="labelAddress">Delivery / House Address</label>
             <input type="text" id="editProfileAddress" class="form-input" placeholder="e.g. Sector 62, Noida" />
           </div>
 
           <div class="form-group">
-            <label class="form-label">City &amp; State (शहर व राज्य)</label>
+            <label class="form-label" data-i18n="labelCityState">City &amp; State</label>
             <input type="text" id="editProfileCity" class="form-input" placeholder="e.g. Noida, Uttar Pradesh" />
           </div>
 
           <!-- Non-Editable / Locked Fields -->
           <div style="border-top:1px dashed #cbd5e1; margin:16px 0; padding-top:12px;">
             <div style="font-size:11px; font-weight:700; color:#64748b; margin-bottom:10px; text-transform:uppercase;">
-              Security Protected Fields (सुरक्षित विवरण)
+              <span data-i18n="labelSecuredFields">Security Protected Fields</span>
             </div>
 
             <div class="form-group">
@@ -689,7 +747,7 @@
       <div class="modal-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
         <h3 style="display:flex; align-items:center; gap:8px;">
           <i class="fa-solid fa-image" style="color:#2563eb;"></i>
-          <span>Profile Photo (प्रोफाइल फोटो)</span>
+          <span><span data-i18n="labelProfilePhoto">Profile Photo</span></span>
         </h3>
         <button class="btn-close-modal" onclick="closeModal('modalViewAvatar')"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -704,10 +762,10 @@
         </div>
         <div style="display:flex; gap:10px; margin-top:22px; width:100%;">
           <button type="button" class="btn-submit-primary" style="flex:1;" onclick="triggerAvatarUpload(event)">
-            <i class="fa-solid fa-camera"></i> Change (फोटो बदलें)
+            <i class="fa-solid fa-camera"></i> <span data-i18n="btnChangePhoto">Change</span>
           </button>
           <button type="button" class="btn-secondary-action" style="flex:1;" onclick="closeModal('modalViewAvatar')">
-            <i class="fa-solid fa-xmark"></i> Close (बंद करें)
+            <i class="fa-solid fa-xmark"></i> <span data-i18n="btnClose">Close</span>
           </button>
         </div>
       </div>
@@ -752,7 +810,7 @@
         <p style="font-size:14px; color:#334155; margin-bottom:20px; line-height:1.5;">
           Are you sure you want to log out of your WorkMate account? Your session will be completely terminated.
           <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">
-            (क्या आप वाकई वर्कमेट खाते से लॉगआउट करना चाहते हैं?)
+            
           </span>
         </p>
         <div style="display:flex; gap:10px;">
@@ -771,7 +829,7 @@
   <div id="modalTracking" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3>Live GPS Tracking (लाइव ट्रैकिंग)</h3>
+        <h3 data-i18n="trackLive">Live GPS Tracking</h3>
         <button class="btn-close-modal" onclick="closeModal('modalTracking')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
@@ -853,7 +911,7 @@
             <button type="button" class="btn-wallet-action" style="background:#f1f5f9; color:#1e293b; border:1px solid #cbd5e1;" onclick="setAddAmount(5000)">+₹5,000</button>
           </div>
           <div class="form-group">
-            <label class="form-label">Payment Method (भुगतान माध्यम)</label>
+            <label class="form-label" data-i18n="labelPaymentMethod">Payment Method</label>
             <select id="addMoneyMethod" class="form-select">
               <option value="UPI">Verified UPI (GPay / PhonePe / Paytm)</option>
               <option value="Cards">HDFC Debit Card (•••• 4092)</option>
@@ -872,38 +930,38 @@
   <div id="modalWorkerOnboard" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3>Worker KYC Onboarding (श्रमिक पंजीकरण)</h3>
+        <h3 data-i18n="workerOnboardTitle">Worker KYC Onboarding</h3>
         <button class="btn-close-modal" onclick="closeModal('modalWorkerOnboard')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
         <form onsubmit="submitWorkerOnboarding(event)">
           <div class="form-group">
-            <label class="form-label">Full Name (पूरा नाम)</label>
+            <label class="form-label" data-i18n="labelFullName">Full Name</label>
             <input type="text" id="workerNameInput" class="form-input" placeholder="e.g. Ramprasad Meena" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Phone Number (मोबाइल नंबर)</label>
+            <label class="form-label" data-i18n="authPhoneLabel">Phone Number</label>
             <input type="tel" id="workerPhoneInput" class="form-input" placeholder="+91 98765 00000" required>
           </div>
           <div class="form-group">
-            <label class="form-label">12-Digit Aadhaar Number (आधार कार्ड नंबर)</label>
+            <label class="form-label" data-i18n="labelAadhaar">12-Digit Aadhaar Number</label>
             <input type="text" id="workerAadhaarInput" class="form-input" placeholder="1234 5678 9012" maxlength="14" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Sector (कार्य क्षेत्र)</label>
+            <label class="form-label" data-i18n="labelSector">Sector</label>
             <select id="workerCatSelect" class="form-select">
-              <option value="construction">Construction (निर्माण व राजमिस्त्री)</option>
-              <option value="events">Events &amp; Catering (कैटरिंग स्टाफ)</option>
-              <option value="shifting">House Shifting (सामान उठाना)</option>
-              <option value="textile">Textile Helper (कपड़ा मिल हेल्पर)</option>
+              <option value="construction">Construction &amp; Masonry</option>
+              <option value="events">Events &amp; Catering</option>
+              <option value="shifting">House &amp; Office Shifting</option>
+              <option value="textile">Textile Mill Helper</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Primary Trade Skill (कौशल प्रोफाइल)</label>
+            <label class="form-label" data-i18n="labelTradeSkill">Primary Trade Skill</label>
             <input type="text" id="workerTradeInput" class="form-input" placeholder="e.g. Master Mason / Tile Specialist" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Expected Daily Wage / Rate (₹ प्रतिदिन)</label>
+            <label class="form-label" data-i18n="labelDailyWage">Expected Daily Wage / Rate (₹/day)</label>
             <input type="number" id="workerRateInput" class="form-input" value="750" required>
           </div>
           <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -935,7 +993,7 @@
             How was your experience with <strong id="reviewWorkerName">Mukesh Verma</strong>?
           </p>
           <div class="form-group">
-            <label class="form-label">Star Rating (स्टार रेटिंग)</label>
+            <label class="form-label" data-i18n="labelStarRating">Star Rating</label>
             <select id="reviewRatingSelect" class="form-select">
               <option value="5">★★★★★ (5 Stars - Excellent)</option>
               <option value="4">★★★★☆ (4 Stars - Very Good)</option>
@@ -943,7 +1001,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Comments (समीक्षा)</label>
+            <label class="form-label" data-i18n="labelComments">Comments</label>
             <textarea id="reviewCommentInput" class="form-textarea" rows="3" placeholder="Punctual, polite and skillful work..."></textarea>
           </div>
           <button type="submit" class="btn-submit-primary">
@@ -1000,6 +1058,105 @@
     </div>
   </div>
 
+  
+  <!-- Modal 13: Booking Dispute / Worker Left Mid-Work & Escrow Refund -->
+  <div id="modalBookingDispute" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 style="color:#e11d48;"><i class="fa-solid fa-triangle-exclamation"></i> <span data-i18n="disputeTitle">Report Issue / Worker Left</span></h3>
+        <button class="btn-close-modal" onclick="closeModal('modalBookingDispute')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitBookingDispute(event)">
+          <input type="hidden" id="disputeBookingId">
+          <input type="hidden" id="disputeWorkerId">
+
+          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:11px; font-weight:700; color:#e11d48; text-transform:uppercase;" data-i18n="disputeWorkerLabel">Assigned Worker</div>
+            <div id="disputeWorkerNameDisplay" style="font-size:15px; font-weight:800; color:#9f1239; margin-top:2px;">Mukesh Verma (ID: w-101)</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="disputeReasonLabel">What happened? (Select Reason)</label>
+            <select id="disputeReasonSelect" class="form-select" required>
+              <option value="worker_left_midway" data-i18n="disputeReason1">Worker left midway before completing the job</option>
+              <option value="poor_quality_or_delay" data-i18n="disputeReason2">Worker arrived late / poor quality of work</option>
+              <option value="extra_cash_demanded" data-i18n="disputeReason3">Worker demanded extra cash beyond platform quote</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="disputeNotesLabel">Incident Notes &amp; Description</label>
+            <textarea id="disputeNotesInput" class="form-textarea" rows="2" placeholder="Describe what happened with the worker..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="disputeRatingLabel">Rate Worker (1 Star for Abandonment)</label>
+            <select id="disputeRatingSelect" class="form-select">
+              <option value="1">★☆☆☆☆ (1 Star - Severe Violation)</option>
+              <option value="2">★★☆☆☆ (2 Stars - Poor Experience)</option>
+              <option value="3">★★★☆☆ (3 Stars - Fair / Incomplete)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="disputeActionLabel">Resolution Action</label>
+            <select id="disputeActionSelect" class="form-select">
+              <option value="instant_wallet_refund" data-i18n="disputeActionRefund">Instant 100% Escrow Wallet Refund</option>
+              <option value="dispatch_replacement" data-i18n="disputeActionReplace">Auto-Dispatch Replacement Worker</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit-primary" style="background:#e11d48;">
+            <i class="fa-solid fa-shield-halved"></i> <span data-i18n="disputeSubmitBtn">Submit Dispute &amp; Claim Refund</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 14: Terms & Conditions (Escrow Protection & Worker Abandonment) -->
+  <div id="modalTermsConditions" class="modal-overlay">
+    <div class="modal-sheet" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 style="color:#0284c7;"><i class="fa-solid fa-file-shield"></i> <span data-i18n="termsTitle">WorkMate Terms &amp; Escrow Protection Policy</span></h3>
+        <button class="btn-close-modal" onclick="closeModal('modalTermsConditions')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px; color:#64748b; margin-bottom:14px;" data-i18n="termsSubtitle">
+          Guaranteed Safety for Customers and Verified Workers
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:18px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px;">
+            <div style="font-weight:700; color:#0f172a; font-size:13px; margin-bottom:4px;" data-i18n="terms1Title">1. 100% Escrow Payment Guarantee</div>
+            <p style="font-size:12px; color:#475569; line-height:1.5;" data-i18n="terms1Desc">
+              Your booking pay is held safely in WorkMate Escrow. Funds are released to the worker only after OTP verification upon satisfactory work completion.
+            </p>
+          </div>
+
+          <div style="background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; padding:12px;">
+            <div style="font-weight:700; color:#9f1239; font-size:13px; margin-bottom:4px;" data-i18n="terms2Title">2. Mid-Work Abandonment Protection</div>
+            <p style="font-size:12px; color:#881337; line-height:1.5;" data-i18n="terms2Desc">
+              If a worker leaves midway or fails to finish the agreed work, report through 'Report Issue'. The system triggers an instant 100% refund of your escrow balance or dispatches a free replacement.
+            </p>
+          </div>
+
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:12px;">
+            <div style="font-weight:700; color:#166534; font-size:13px; margin-bottom:4px;" data-i18n="terms3Title">3. Worker Penalty &amp; Transparent Ratings</div>
+            <p style="font-size:12px; color:#14532d; line-height:1.5;" data-i18n="terms3Desc">
+              Workers with reported abandonments receive downward rating penalties and are pushed to the bottom of the dispatch queue to safeguard community standards.
+            </p>
+          </div>
+        </div>
+
+        <button class="btn-submit-primary" style="background:#0284c7;" onclick="closeModal('modalTermsConditions')">
+          <i class="fa-solid fa-check"></i> <span data-i18n="termsCloseBtn">I Understand &amp; Accept</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -1008,24 +1165,6 @@
   <script src="/static/js/tracking.js"></script>
   <script src="/static/js/app.js"></script>
   <script>
-    function switchAuthTab(tab) {
-      const btnCust = document.getElementById("authTabCustomer");
-      const btnAdmin = document.getElementById("authTabAdmin");
-      const formCust = document.getElementById("formCustomerLogin");
-      const formAdmin = document.getElementById("formAdminLogin");
-
-      if (tab === "customer") {
-        btnCust.classList.add("active");
-        btnAdmin.classList.remove("active");
-        formCust.style.display = "block";
-        formAdmin.style.display = "none";
-      } else {
-        btnAdmin.classList.add("active");
-        btnCust.classList.remove("active");
-        formAdmin.style.display = "block";
-        formCust.style.display = "none";
-      }
-    }
 
     function setBookingTab(tab) {
       document.querySelectorAll(".booking-tab-btn").forEach(b => b.classList.remove("active"));

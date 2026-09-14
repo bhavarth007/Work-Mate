@@ -40,6 +40,7 @@ const state = {
 // 100% Pure Bilingual Localization Dictionary
 const I18N = {
   en: {
+    appHtmlTitle: "WorkMate | On-Demand Blue-Collar Labour Platform",
     appName: "WorkMate",
     tagline: "Your Trusted Labour Partner",
     greeting: "Hello, ",
@@ -75,9 +76,10 @@ const I18N = {
     menuSecurity: "Security & Privacy",
     menuInsurance: "Micro-Insurance Enrollment",
     menuSupport: "24/7 Support (Call / WhatsApp)",
-    menuDatabase: "Database & Cloud Sync (Firebase)",
+    menuDatabase: "Database & Cloud Sync",
     menuAdminConsole: "Admin Rate & Bank Console",
-    menuWorkerOnboard: "Register as Worker Partner (KYC)",
+    menuWorkerOnboard: "Register as Worker Partner",
+    menuTerms: "Terms & Conditions (Escrow Protection)",
     btnLogout: "Log Out",
     editProfileBtn: "Edit Profile",
     profileDetailsTitle: "Account & Profile Details",
@@ -90,24 +92,86 @@ const I18N = {
     statusUpcoming: "Scheduled",
     statusCompleted: "Completed",
     statusCancelled: "Cancelled",
+    statusDisputed: "Disputed & Refunded",
     totalCostLabel: "Total Cost",
     activeGpsLabel: "Active GPS Tracking >",
     rateWorkerLabel: "Rate Worker & Leave Review",
     noBookings: "No booking records found.",
     noActiveBooking: "No active in-progress booking. Tap button below to book instant labour.",
     chargeNotice: "Charge",
-    payAndPostBtn: "💳 Pay & Post Work (Reserve Labour)",
+    payAndPostBtn: "Pay & Post Work (Reserve Labour)",
     langBtnLabel: "English",
     adminRatesTab: "4 Module Rates",
     customerPreviewTab: "Customer View",
     adminHeroTitle: "WorkMate Rate & System Control",
     adminHeroSub: "Edit base prices for all 4 service modules in real-time. Changes instantly recalculate customer checkout totals.",
-    adminModulesHeader: "Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)",
+    adminModulesHeader: "Service Module Pricing & Base Rates",
+    adminChargeConfigHeader: "WorkMate Platform Charge Configuration",
     expandAll: "Expand All",
-    collapseAll: "Collapse All"
+    collapseAll: "Collapse All",
+    authCustomerLoginTab: "Customer Login",
+    authCustomerRegisterTab: "Register",
+    authAdminTab: "Admin",
+    authPhoneLabel: "Mobile Number",
+    authLoginBtn: "Login as Customer",
+    authRegisterBtn: "Register & Continue",
+    adminIdLabel: "Admin ID",
+    adminPasswordLabel: "Admin Password",
+    adminLoginBtn: "Login to Admin Console",
+    newAccountPrompt: "New to WorkMate?",
+    createAccountLink: "Create an account",
+    alreadyAccountPrompt: "Already have an account?",
+    loginAccountLink: "Login here",
+    sslSecurityFoot: "Protected by 256-bit SSL Escrow Security • UIDAI Aadhaar Verified",
+    labelFullName: "Full Name",
+    labelAddress: "Delivery / House Address",
+    labelCityState: "City & State",
+    labelEmail: "Email Address",
+    labelProfilePhoto: "Profile Photo",
+    btnChangePhoto: "Change Photo",
+    btnClose: "Close",
+    labelSecuredFields: "Security Protected Fields",
+    modalBookingTitle: "Add Work & Book Labour",
+    labelServiceTrade: "Select Service / Trade",
+    labelOfferedPay: "Your Offered Work Pay (Budget)",
+    labelBookingType: "Booking Type",
+    labelDuration: "Duration",
+    labelLocation: "Location / Address",
+    labelTaskNotes: "Task Specifications / Notes",
+    labelPaymentMethod: "Payment Method",
+    workerOnboardTitle: "Worker KYC Onboarding",
+    labelAadhaar: "12-Digit Aadhaar Number",
+    labelSector: "Sector",
+    labelTradeSkill: "Primary Trade Skill",
+    labelDailyWage: "Expected Daily Wage / Rate (₹/day)",
+    labelStarRating: "Star Rating",
+    labelComments: "Review Comments",
+    reportIssueBtn: "Report Issue / Worker Left",
+    disputeTitle: "Report Issue / Worker Left",
+    disputeWorkerLabel: "Assigned Worker",
+    disputeReasonLabel: "What happened? (Select Reason)",
+    disputeReason1: "Worker left midway before completing the job",
+    disputeReason2: "Worker arrived late / poor quality of work",
+    disputeReason3: "Worker demanded extra cash beyond platform quote",
+    disputeNotesLabel: "Incident Notes & Description",
+    disputeRatingLabel: "Rate Worker (1 Star for Abandonment)",
+    disputeActionLabel: "Resolution Action",
+    disputeActionRefund: "Instant 100% Escrow Wallet Refund",
+    disputeActionReplace: "Auto-Dispatch Replacement Worker",
+    disputeSubmitBtn: "Submit Dispute & Claim Refund",
+    termsTitle: "WorkMate Terms & Escrow Protection Policy",
+    termsSubtitle: "Guaranteed Safety for Customers and Verified Workers",
+    terms1Title: "1. 100% Escrow Payment Guarantee",
+    terms1Desc: "Your booking pay is held safely in WorkMate Escrow. Funds are released to the worker only after OTP verification upon satisfactory work completion.",
+    terms2Title: "2. Mid-Work Abandonment Protection",
+    terms2Desc: "If a worker leaves midway or fails to finish the agreed work, report through 'Report Issue'. The system triggers an instant 100% refund of your escrow balance or dispatches a free replacement.",
+    terms3Title: "3. Worker Penalty & Transparent Ratings",
+    terms3Desc: "Workers with reported abandonments receive downward rating penalties and are pushed to the bottom of the dispatch queue to safeguard community standards.",
+    termsCloseBtn: "I Understand & Accept"
   },
   hi: {
-    appName: "वर्कमेट (WorkMate)",
+    appHtmlTitle: "वर्कमेट | ऑन-डिमांड लेबर प्लेटफॉर्म",
+    appName: "वर्कमेट",
     tagline: "आपका भरोसेमंद लेबर साथी",
     greeting: "नमस्ते, ",
     searchPlaceholder: "आप किसे ढूंढ रहे हैं? राजमिस्त्री, प्लंबर, कैटरिंग...",
@@ -125,7 +189,7 @@ const I18N = {
     navHome: "होम",
     navOrders: "मेरी बुकिंग",
     navPayments: "भुगतान",
-    navAccount: "मेरा अकाउंट",
+    navAccount: "मेरा खाता",
     quickBookBtn: "तुरंत बुक करें",
     upcomingTab: "आगामी",
     historyTab: "पिछला इतिहास",
@@ -142,9 +206,10 @@ const I18N = {
     menuSecurity: "सुरक्षा एवं गोपनीयता",
     menuInsurance: "माइक्रो-इंश्योरेंस (श्रमिक सुरक्षा बीमा)",
     menuSupport: "24/7 सहायता (कॉल / व्हाट्सएप)",
-    menuDatabase: "डेटाबेस एवं क्लाउड सेटिंग्स (फायरबेस)",
-    menuAdminConsole: "व्यवस्थापक (Admin) दर व बैंक कंसोल",
-    menuWorkerOnboard: "श्रमिक साथी के रूप में पंजीकरण (केवाईसी)",
+    menuDatabase: "डेटाबेस एवं क्लाउड सेटिंग्स",
+    menuAdminConsole: "व्यवस्थापक दर व बैंक कंसोल",
+    menuWorkerOnboard: "श्रमिक साथी के रूप में पंजीकरण",
+    menuTerms: "नियम एवं शर्तें (एस्क्रो सुरक्षा नीति)",
     btnLogout: "लॉगआउट करें",
     editProfileBtn: "प्रोफाइल संपादित करें",
     profileDetailsTitle: "खाता एवं प्रोफाइल विवरण",
@@ -157,21 +222,82 @@ const I18N = {
     statusUpcoming: "शेड्यूल",
     statusCompleted: "पूर्ण",
     statusCancelled: "रद्द",
+    statusDisputed: "विवादित एवं रिफंडेड",
     totalCostLabel: "कुल लागत",
     activeGpsLabel: "सक्रिय जीपीएस ट्रैकिंग देखें >",
     rateWorkerLabel: "रेटिंग और समीक्षा दें",
     noBookings: "कोई बुकिंग रिकॉर्ड नहीं मिला।",
     noActiveBooking: "वर्तमान में कोई सक्रिय बुकिंग नहीं है। नीचे दिए बटन से तुरंत लेबर बुक करें।",
-    chargeNotice: "चार्ज (Charge)",
-    payAndPostBtn: "💳 भुगतान करें एवं काम जोड़ें (लेबर आरक्षित करें)",
+    chargeNotice: "चार्ज",
+    payAndPostBtn: "भुगतान करें एवं काम जोड़ें (लेबर आरक्षित करें)",
     langBtnLabel: "हिन्दी",
     adminRatesTab: "4 मॉड्यूल की दरें",
     customerPreviewTab: "ग्राहक ऐप व्यू",
     adminHeroTitle: "वर्कमेट दर एवं सिस्टम नियंत्रण",
     adminHeroSub: "सभी 4 सर्विस मॉड्यूल्स की बेस दरें सीधे बदलें। नए मूल्य तुरंत वेबसाइट पर लागू होंगे।",
-    adminModulesHeader: "सर्विस मॉड्यूल मूल्य एवं बेस दरें (सभी 4 मॉड्यूल)",
+    adminModulesHeader: "सर्विस मॉड्यूल मूल्य एवं बेस दरें",
+    adminChargeConfigHeader: "वर्कमेट प्लेटफॉर्म चार्ज विन्यास",
     expandAll: "सभी खोलें",
-    collapseAll: "सभी समेटें"
+    collapseAll: "सभी समेटें",
+    authCustomerLoginTab: "ग्राहक लॉगिन",
+    authCustomerRegisterTab: "नया खाता बनाएं",
+    authAdminTab: "व्यवस्थापक कंसोल",
+    authPhoneLabel: "मोबाइल नंबर",
+    authLoginBtn: "मोबाइल से लॉगिन करें",
+    authRegisterBtn: "खाता बनाएं एवं आगे बढ़ें",
+    adminIdLabel: "व्यवस्थापक आईडी",
+    adminPasswordLabel: "पासवर्ड",
+    adminLoginBtn: "व्यवस्थापक कंसोल में प्रवेश करें",
+    newAccountPrompt: "वर्कमेट पर नए हैं?",
+    createAccountLink: "नया खाता बनाएं",
+    alreadyAccountPrompt: "क्या पहले से खाता है?",
+    loginAccountLink: "यहाँ लॉगिन करें",
+    sslSecurityFoot: "256-बिट एसएसएल एस्क्रो सुरक्षा • आधार सत्यापित",
+    labelFullName: "पूरा नाम",
+    labelAddress: "मकान / गली का पता",
+    labelCityState: "शहर व राज्य",
+    labelEmail: "ईमेल पता",
+    labelProfilePhoto: "प्रोफाइल फोटो",
+    btnChangePhoto: "फोटो बदलें",
+    btnClose: "बंद करें",
+    labelSecuredFields: "सुरक्षित विवरण",
+    modalBookingTitle: "काम जोड़ें एवं लेबर बुक करें",
+    labelServiceTrade: "सेवा / कार्य का चयन करें",
+    labelOfferedPay: "तय की गई मजदूरी (बजट)",
+    labelBookingType: "बुकिंग प्रकार",
+    labelDuration: "कार्य अवधि",
+    labelLocation: "कार्य स्थल / पता",
+    labelTaskNotes: "काम का विवरण एवं निर्देश",
+    labelPaymentMethod: "भुगतान माध्यम",
+    workerOnboardTitle: "श्रमिक पंजीकरण एवं सत्यापन",
+    labelAadhaar: "12-अंकों का आधार नंबर",
+    labelSector: "कार्य क्षेत्र",
+    labelTradeSkill: "मुख्य कौशल",
+    labelDailyWage: "दैनिक मजदूरी दर (प्रतिदिन)",
+    labelStarRating: "स्टार रेटिंग",
+    labelComments: "समीक्षा / टिप्पणी",
+    reportIssueBtn: "शिकायत दर्ज करें / श्रमिक काम छोड़कर गया",
+    disputeTitle: "शिकायत दर्ज करें / श्रमिक अधूरा काम छोड़कर गया",
+    disputeWorkerLabel: "आवंटित श्रमिक",
+    disputeReasonLabel: "समस्या का कारण चुनें",
+    disputeReason1: "श्रमिक बिना काम पूरा किए बीच में छोड़कर चला गया",
+    disputeReason2: "श्रमिक देरी से आया / काम की गुणवत्ता खराब थी",
+    disputeReason3: "श्रमिक ने तय राशि से अतिरिक्त नकद पैसे मांगे",
+    disputeNotesLabel: "घटना का विवरण लिखें",
+    disputeRatingLabel: "श्रमिक रेटिंग (नियम उल्लंघन पर 1 स्टार)",
+    disputeActionLabel: "समाधान विकल्प",
+    disputeActionRefund: "100% एस्क्रो राशि तुरंत वॉलेट में वापस पाएं",
+    disputeActionReplace: "तुरंत दूसरा प्रतिस्थापन श्रमिक भेजें",
+    disputeSubmitBtn: "विवाद दर्ज करें और रिफंड प्राप्त करें",
+    termsTitle: "वर्कमेट नियम एवं एस्क्रो सुरक्षा नीति",
+    termsSubtitle: "ग्राहकों और सत्यापित श्रमिकों के लिए पूर्ण सुरक्षा",
+    terms1Title: "1. 100% एस्क्रो भुगतान सुरक्षा",
+    terms1Desc: "आपके द्वारा जमा की गई मजदूरी सुरक्षित वर्कमेट एस्क्रो खाते में रहती है। कार्य सफलतापूर्वक पूरा होने और आपके द्वारा ओटीपी देने पर ही श्रमिक को भुगतान होता है।",
+    terms2Title: "2. काम बीच में छोड़ने पर सुरक्षा",
+    terms2Desc: "यदि कोई श्रमिक बीच में काम छोड़कर चला जाता है, तो 'शिकायत दर्ज करें' पर टैप करें। आपको तुरंत 100% राशि आपके वॉलेट में वापस मिलेगी या तुरंत दूसरा श्रमिक भेजा जाएगा।",
+    terms3Title: "3. श्रमिक रेटिंग व अनुशासनात्मक कार्रवाई",
+    terms3Desc: "नियमों का उल्लंघन करने वाले श्रमिकों की रेटिंग कम की जाती है और उन्हें सिस्टम से बाहर कर दिया जाता है ताकि विश्वसनीयता बनी रहे।",
+    termsCloseBtn: "मैं समझ गया और सहमत हूँ"
   }
 };
 
@@ -239,6 +365,8 @@ function checkUserSession() {
   const appContainer = document.getElementById("appContainer");
   const adminTopBar = document.getElementById("adminTopBar");
   const navAdmin = document.getElementById("nav-admin");
+  const menuAdminConsole = document.getElementById("menuAdminConsoleItem");
+  const menuDatabaseSync = document.getElementById("menuDatabaseSyncItem");
 
   if (!savedSession) {
     state.session = null;
@@ -247,6 +375,12 @@ function checkUserSession() {
     if (appContainer) appContainer.style.display = "none";
     if (adminTopBar) adminTopBar.style.display = "none";
     if (navAdmin) navAdmin.style.display = "none";
+    if (menuAdminConsole) menuAdminConsole.style.display = "none";
+    if (menuDatabaseSync) menuDatabaseSync.style.display = "none";
+
+    const defaultLang = localStorage.getItem("workmate_default_lang") || "hi";
+    state.lang = defaultLang;
+    updateLanguageUI();
     return false;
   }
 
@@ -261,21 +395,25 @@ function checkUserSession() {
 
     // Load isolated language preference for this specific user
     const userId = state.session.user ? state.session.user.id : "guest";
-    const userLang = localStorage.getItem("workmate_lang_" + userId);
-    if (userLang) {
-      state.lang = userLang;
-    }
+    const userLang = localStorage.getItem("workmate_lang_" + userId) || localStorage.getItem("workmate_default_lang") || "hi";
+    state.lang = userLang;
 
-    if (state.session.role === "admin") {
+    const isAdmin = state.session && state.session.role === "admin";
+    if (isAdmin) {
       if (adminTopBar) adminTopBar.style.display = "flex";
       if (navAdmin) navAdmin.style.display = "flex";
+      if (menuAdminConsole) menuAdminConsole.style.display = "flex";
+      if (menuDatabaseSync) menuDatabaseSync.style.display = "flex";
       switchTab("admin");
     } else {
       if (adminTopBar) adminTopBar.style.display = "none";
       if (navAdmin) navAdmin.style.display = "none";
+      if (menuAdminConsole) menuAdminConsole.style.display = "none";
+      if (menuDatabaseSync) menuDatabaseSync.style.display = "none";
       switchTab("home");
     }
 
+    updateLanguageUI();
     return true;
   } catch (e) {
     localStorage.removeItem("workmate_session");
@@ -286,9 +424,37 @@ function checkUserSession() {
   }
 }
 
+function switchAuthTab(tab) {
+  const tabCust = document.getElementById("authTabCustomer");
+  const tabReg = document.getElementById("authTabCustomerRegister");
+  const tabAdmin = document.getElementById("authTabAdmin");
+  const formCust = document.getElementById("formCustomerLogin");
+  const formReg = document.getElementById("formCustomerRegister");
+  const formAdmin = document.getElementById("formAdminLogin");
+
+  [tabCust, tabReg, tabAdmin].forEach(t => t && t.classList.remove("active"));
+  [formCust, formReg, formAdmin].forEach(f => f && (f.style.display = "none"));
+
+  if (tab === "customer" || tab === "login") {
+    if (tabCust) tabCust.classList.add("active");
+    if (formCust) formCust.style.display = "block";
+  } else if (tab === "register") {
+    if (tabReg) tabReg.classList.add("active");
+    if (formReg) formReg.style.display = "block";
+  } else if (tab === "admin") {
+    if (tabAdmin) tabAdmin.classList.add("active");
+    if (formAdmin) formAdmin.style.display = "block";
+  }
+}
+
 async function handleCustomerLogin(event) {
   if (event) event.preventDefault();
-  const phone = document.getElementById("loginPhoneInput").value.trim() || "+91 98765 43210";
+  const phone = (document.getElementById("loginPhoneInput").value || "").trim();
+
+  if (!phone) {
+    showToast(state.lang === "hi" ? "कृपया मोबाइल नंबर दर्ज करें।" : "Please enter your mobile number.", "error");
+    return;
+  }
 
   try {
     const res = await fetch("/api/auth/login", {
@@ -298,10 +464,59 @@ async function handleCustomerLogin(event) {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Login failed");
+    if (!res.ok) {
+      if (res.status === 404) {
+        showToast(
+          state.lang === "hi"
+            ? "इस मोबाइल नंबर से खाता नहीं मिला। कृपया पहले नया खाता बनाएं।"
+            : "Account not found with this mobile number. Please register first to create an account.",
+          "error"
+        );
+        switchAuthTab("register");
+        const cleanDigits = phone.replace(/[^0-9]/g, "").slice(-10);
+        const regPhone = document.getElementById("registerPhoneInput");
+        if (regPhone) regPhone.value = cleanDigits;
+        return;
+      }
+      throw new Error(data.detail || "Login failed");
+    }
 
     localStorage.setItem("workmate_session", JSON.stringify(data));
     showToast(state.lang === "hi" ? "सफलतापूर्वक लॉगिन हुआ! स्वागत है।" : "Logged in successfully! Welcome.", "success");
+
+    checkUserSession();
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function handleCustomerRegister(event) {
+  if (event) event.preventDefault();
+  const name = (document.getElementById("registerNameInput").value || "").trim();
+  const phone = (document.getElementById("registerPhoneInput").value || "").trim();
+  const address = (document.getElementById("registerAddressInput").value || "").trim();
+  const city = (document.getElementById("registerCityInput").value || "").trim();
+  const emailInput = document.getElementById("registerEmailInput");
+  const email = emailInput ? emailInput.value.trim() : "";
+
+  if (!name || !phone) {
+    showToast(state.lang === "hi" ? "कृपया नाम और मोबाइल नंबर दर्ज करें।" : "Please enter your name and mobile number.", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, phone, address, city, email })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Registration failed");
+
+    localStorage.setItem("workmate_session", JSON.stringify(data));
+    showToast(state.lang === "hi" ? "खाता सफलतापूर्वक बन गया है! स्वागत है।" : "Account registered successfully! Welcome to WorkMate.", "success");
 
     checkUserSession();
     await loadInitialData();
@@ -418,7 +633,8 @@ function updateLanguageUI() {
 }
 
 function applyTranslations() {
-  const dict = I18N[state.lang];
+  const dict = I18N[state.lang] || I18N.en;
+  const isHi = state.lang === "hi";
 
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
@@ -441,7 +657,9 @@ function applyTranslations() {
 
   const locEl = document.getElementById("headerLocationText");
   if (locEl) {
-    locEl.textContent = isAdmin ? (isHi ? "वर्कमेट प्रशासनिक मुख्यालय" : "WorkMate Admin HQ") : (state.userProfile.address || "Flat 402, Lotus Tower, Sector 14");
+    locEl.textContent = isAdmin 
+      ? (isHi ? "वर्कमेट प्रशासनिक मुख्यालय" : "WorkMate Admin HQ") 
+      : (state.userProfile.address || "Flat 402, Lotus Tower, Sector 14");
   }
 
   const headerAvatar = document.querySelector(".header-user-avatar img");
@@ -450,6 +668,25 @@ function applyTranslations() {
       ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
       : (state.userProfile.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face");
   }
+
+  // Auth Card Language Switcher Label
+  const authLangTag = document.getElementById("authLangTag");
+  if (authLangTag) authLangTag.textContent = isHi ? "English" : "हिन्दी";
+
+  const currentLangTag = document.getElementById("currentLangTag");
+  if (currentLangTag) currentLangTag.textContent = isHi ? "English" : "हिन्दी";
+
+  const currentLangIndicator = document.getElementById("currentLangIndicator");
+  if (currentLangIndicator) currentLangIndicator.textContent = isHi ? "EN" : "HI";
+
+  const menuLangIndicator = document.getElementById("menuLangIndicator");
+  if (menuLangIndicator) menuLangIndicator.textContent = isHi ? "हिन्दी >" : "English >";
+
+  // Hide admin menus completely from regular customer accounts
+  const menuAdmin = document.getElementById("menuAdminConsoleItem");
+  const menuDb = document.getElementById("menuDatabaseSyncItem");
+  if (menuAdmin) menuAdmin.style.display = isAdmin ? "flex" : "none";
+  if (menuDb) menuDb.style.display = isAdmin ? "flex" : "none";
 }
 
 // ----------------- Navigation Tabs ----------------- //
@@ -651,6 +888,9 @@ function renderActiveBooking() {
           <i class="fa-solid fa-check-double"></i> ${dict.verifyOtpBtn}
         </button>
       </div>
+      <button type="button" class="btn-dispute-worker" onclick="openDisputeModal('${b.id}', '${b.worker_id || 'w-101'}', '${(b.worker_name || 'Mukesh Verma').replace(/'/g, "\\'")}')">
+        <i class="fa-solid fa-triangle-exclamation"></i> ${dict.reportIssueBtn}
+      </button>
     </div>
   `;
 }
@@ -860,7 +1100,7 @@ function renderProfile() {
           <div class="detail-value" style="color:#1e40af; font-weight:800;">${isHi ? 'सिस्टम प्रशासक' : (p.account_type || 'System Administrator')}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
-          <div class="detail-label"><i class="fa-solid fa-envelope"></i> Email (ईमेल)</div>
+          <div class="detail-label"><i class="fa-solid fa-envelope"></i> ${isHi ? 'ईमेल' : 'Email'}</div>
           <div class="detail-value" style="color:#0f172a; font-weight:700;">${p.email || 'bhavarthhapani7@gmail.com'}</div>
         </div>
         <div class="detail-pill">
@@ -1832,3 +2072,60 @@ document.addEventListener("DOMContentLoaded", () => {
   if (typeSelect) typeSelect.addEventListener("change", updateEstimatedPrice);
   if (customOfferInput) customOfferInput.addEventListener("input", updateEstimatedPrice);
 });
+
+// ----------------- Worker Dispute & Terms Modals ----------------- //
+
+function openTermsModal() {
+  const modal = document.getElementById("modalTermsConditions");
+  if (modal) modal.classList.add("active");
+}
+
+function openDisputeModal(bookingId, workerId, workerName) {
+  const modal = document.getElementById("modalBookingDispute");
+  if (!modal) return;
+  const bIdInput = document.getElementById("disputeBookingId");
+  const wIdInput = document.getElementById("disputeWorkerId");
+  const nameDisplay = document.getElementById("disputeWorkerNameDisplay");
+  if (bIdInput) bIdInput.value = bookingId || "";
+  if (wIdInput) wIdInput.value = workerId || "w-101";
+  if (nameDisplay) nameDisplay.textContent = `${workerName || 'Mukesh Verma'} (ID: ${workerId || 'w-101'})`;
+  modal.classList.add("active");
+}
+
+async function submitBookingDispute(event) {
+  if (event) event.preventDefault();
+  const bookingId = document.getElementById("disputeBookingId").value;
+  const workerId = document.getElementById("disputeWorkerId").value;
+  const reason = document.getElementById("disputeReasonSelect").value;
+  const notes = (document.getElementById("disputeNotesInput").value || "").trim();
+  const rating = parseInt(document.getElementById("disputeRatingSelect").value, 10) || 1;
+  const refundAction = document.getElementById("disputeActionSelect").value;
+
+  try {
+    const res = await fetch("/api/bookings/dispute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        worker_id: workerId,
+        reason: `${reason}: ${notes}`,
+        rating: rating,
+        refund_action: refundAction
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to submit dispute");
+
+    closeModal("modalBookingDispute");
+    showToast(
+      state.lang === "hi"
+        ? `विवाद दर्ज हुआ! ₹${data.refund_amount} की 100% एस्क्रो राशि वॉलेट में वापस आ गई है।`
+        : `Dispute submitted! 100% Escrow refund of ₹${data.refund_amount} credited to your wallet.`,
+      "success"
+    );
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}

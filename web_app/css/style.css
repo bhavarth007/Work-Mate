@@ -1882,3 +1882,56 @@ body {
   background: #1d4ed8;
 }
 
+/* Auth Top Bar & Language Selector */
+.auth-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.auth-lang-btn {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e40af;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.auth-lang-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+/* Worker Abandonment / Dispute Button on Active Booking Card */
+.btn-dispute-worker {
+  width: 100%;
+  padding: 9px 12px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-dispute-worker:hover {
+  background: #ffe4e6;
+  border-color: #fca5a5;
+  color: #be123c;
+}
+
+

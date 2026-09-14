@@ -85,7 +85,7 @@ class Booking(BaseModel):
     worker_payout_amount: float
     otp: str = "4567"
     eta_minutes: int = 15
-    status: Literal["upcoming", "in_progress", "completed", "cancelled"] = "upcoming"
+    status: Literal["upcoming", "in_progress", "completed", "cancelled", "disputed_refunded", "disputed_replacement"] = "upcoming"
     location_address: str
     lat: float
     lng: float
@@ -101,11 +101,11 @@ class OTPVerifyRequest(BaseModel):
 
 class BookingStatusUpdateRequest(BaseModel):
     booking_id: str
-    status: Literal["upcoming", "in_progress", "completed", "cancelled"]
+    status: Literal["upcoming", "in_progress", "completed", "cancelled", "disputed_refunded", "disputed_replacement"]
 
 class WalletTransaction(BaseModel):
     id: str
-    type: Literal["deposit", "payout", "payment", "commission"]
+    type: Literal["deposit", "payout", "payment", "commission", "refund"]
     amount: float
     direction: Literal["credit", "debit"]
     title_en: str
@@ -175,4 +175,18 @@ class AuthLoginRequest(BaseModel):
 
 class ServiceRateUpdate(BaseModel):
     base_rate: float = Field(..., gt=0)
+
+class CustomerRegisterRequest(BaseModel):
+    name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=5)
+    address: Optional[str] = ""
+    city: Optional[str] = ""
+    email: Optional[str] = None
+
+class BookingDisputeRequest(BaseModel):
+    booking_id: str
+    worker_id: str
+    reason: str = Field(..., min_length=3)
+    rating: int = Field(1, ge=1, le=5)
+    refund_action: Literal["refund_wallet", "replacement_worker", "instant_wallet_refund", "dispatch_replacement"] = "instant_wallet_refund"
 

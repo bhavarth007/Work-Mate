@@ -7,6 +7,8 @@ import json
 import os
 import threading
 import uuid
+import re
+import random
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -14,7 +16,7 @@ DB_FILE = os.path.join(os.path.dirname(__file__), "workmate.db")
 _lock = threading.Lock()
 
 def get_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=30.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -762,6 +764,122 @@ def update_user_avatar(photo: str, user_id: str = "u-1") -> Dict[str, Any]:
         conn.commit()
         conn.close()
         return get_user_profile(uid)
+
+def get_user_by_phone(phone: str) -> Optional[Dict[str, Any]]:
+    target = re.sub(r'\D', '', phone)
+    if len(target) > 10 and target.startswith('91'):
+        target = target[2:]
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM users").fetchall()
+    conn.close()
+    for r in rows:
+        stored = re.sub(r'\D', '', r["phone"] or '')
+        if len(stored) > 10 and stored.startswith('91'):
+            stored = stored[2:]
+        if stored and target and (stored == target or target in stored):
+            return dict(r)
+    return None
+
+def register_user(name: str, phone: str, address: str, city: str, email: Optional[str] = None) -> Dict[str, Any]:
+    existing = get_user_by_phone(phone)
+    if existing:
+        raise ValueError("A user with this mobile number is already registered.")
+    uid = f"u-{uuid.uuid4().hex[:6]}"
+    mem_num = random.randint(10000, 99999)
+    member_id = f"WM-USER-{mem_num}"
+    def_photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+    joined = "September 14, 2026"
+    
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, 'Customer Verified', ?, 5.0, 'verified')
+        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, joined))
+        conn.commit()
+        conn.close()
+        return get_user_profile(uid)
+
+def report_booking_dispute(booking_id: str, worker_id: str, reason: str, rating: int, refund_action: str = "refund_wallet") -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # 1. Fetch booking
+        b_row = cursor.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+        if not b_row:
+            conn.close()
+            raise ValueError(f"Booking {booking_id} not found")
+        booking = dict(b_row)
+        
+        # 2. Update booking status
+        is_refund = refund_action in ["refund_wallet", "instant_wallet_refund"]
+        new_status = "disputed_refunded" if is_refund else "disputed_replacement"
+        cursor.execute("""
+            UPDATE bookings 
+            SET status = ?, 
+                task_description = task_description || ?
+            WHERE id = ?
+        """, (new_status, f" [DISPUTE: {reason}]", booking_id))
+        
+        # 3. Credit wallet if refund requested
+        refund_amount = 0.0
+        if is_refund:
+            refund_amount = float(booking.get("total_cost", 0.0))
+            cursor.execute("UPDATE wallet SET balance = balance + ? WHERE id = 1", (refund_amount,))
+            
+            tx_id = f"tx-{uuid.uuid4().hex[:6]}"
+            cursor.execute("""
+                INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+                VALUES (?, 'refund', ?, 'credit', ?, ?, 'success', ?, 'WorkMate Escrow', ?)
+            """, (
+                tx_id,
+                refund_amount,
+                f"Escrow Refund: Booking #{booking_id} (Worker Abandoned)",
+                f"एस्क्रो रिफंड: बुकिंग #{booking_id} (श्रमिक ने काम छोड़ा)",
+                datetime.now().strftime("%b %d, %Y • %I:%M %p"),
+                f"REF-{uuid.uuid4().hex[:8].upper()}"
+            ))
+            
+        # 4. Record negative review & penalize worker rating
+        rev_id = f"rev-{uuid.uuid4().hex[:6]}"
+        cursor.execute("""
+            INSERT INTO reviews (id, booking_id, worker_id, worker_name, customer_name, rating, tags_json, comment, date_str)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            rev_id,
+            booking_id,
+            worker_id,
+            booking.get("worker_name", "Worker"),
+            booking.get("customer_name", "Customer"),
+            max(1, min(rating, 5)),
+            json.dumps(["Mid-Work Issue", "Abandoned"]),
+            f"Incident Reported: {reason}",
+            datetime.now().strftime("%b %d, %Y")
+        ))
+        
+        # Calculate new worker rating downwards
+        cursor.execute("""
+            UPDATE workers 
+            SET rating = ROUND(MAX(1.0, (rating * reviews_count + ?) / (reviews_count + 1)), 1),
+                reviews_count = reviews_count + 1
+            WHERE id = ?
+        """, (max(1, min(rating, 5)), worker_id))
+        
+        w_row = cursor.execute("SELECT rating FROM workers WHERE id = ?", (worker_id,)).fetchone()
+        penalized_rating = w_row["rating"] if w_row else rating
+
+        conn.commit()
+        conn.close()
+        return {
+            "success": True,
+            "booking_id": booking_id,
+            "status": new_status,
+            "refund_amount": refund_amount,
+            "worker_penalized_rating": penalized_rating,
+            "message": "Dispute recorded and escrow refund credited successfully" if is_refund else "Replacement worker requested"
+        }
 
 def get_system_config() -> Dict[str, Any]:
     conn = get_connection()
