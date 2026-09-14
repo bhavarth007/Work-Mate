@@ -28,7 +28,8 @@ from .database import (
     get_user_profile, update_user_profile, update_user_avatar,
     get_user_by_phone, register_user, report_booking_dispute,
     update_service_rate, get_admin_banks, switch_primary_bank,
-    get_admin_financial_stats, get_system_config, set_platform_charge_percent
+    get_admin_financial_stats, get_system_config, set_platform_charge_percent,
+    get_all_users
 )
 
 # Initialize database schema and seeds
@@ -87,6 +88,32 @@ def get_stats():
         "completed_bookings": len(completed_jobs),
         "wallet_balance": wallet["balance"],
         "customer_rating_average": 4.8
+    }
+
+@app.get("/api/database/records")
+def get_database_records():
+    users = get_all_users()
+    bookings = get_bookings()
+    services = get_services()
+    workers = get_workers()
+    categories = get_categories()
+    wallet_txs = get_transactions()
+    return {
+        "success": True,
+        "storage_type": "SQLite3 Local Database",
+        "stats": {
+            "total_users": len(users),
+            "total_bookings": len(bookings),
+            "total_services": len(services),
+            "total_workers": len(workers),
+            "total_transactions": len(wallet_txs)
+        },
+        "users": users,
+        "bookings": bookings,
+        "services": services,
+        "workers": workers,
+        "transactions": wallet_txs,
+        "categories": categories
     }
 
 # ----------------- Categories & Services ----------------- #

@@ -9,11 +9,12 @@
 
   // Default seed database
   const DEFAULT_DB = {
+    schemaVersion: 2,
     categories: [
-      { id: "construction", name_en: "Construction & Masonry", name_hi: "निर्माण एवं राजमिस्त्री", icon: "fa-trowel-bricks", count: 18, color: "#dbeafe", textColor: "#1d4ed8" },
-      { id: "events", name_en: "Events & Catering", name_hi: "इवेंट्स एवं कैटरिंग", icon: "fa-champagne-glasses", count: 12, color: "#fce7f3", textColor: "#be185d" },
-      { id: "shifting", name_en: "House & Office Shifting", name_hi: "सामान शिफ्टिंग एवं लोडिंग", icon: "fa-truck-ramp-box", count: 15, color: "#fef3c7", textColor: "#b45309" },
-      { id: "textile", name_en: "Textile Mill & Fabric", name_hi: "टेक्सटाइल मिल एवं थान हेल्पर", icon: "fa-scissors", count: 22, color: "#dcfce7", textColor: "#15803d" }
+      { id: "construction", name_en: "Construction & Masonry", name_hi: "निर्माण एवं राजमिस्त्री", subtext_en: "Brickwork, Tiling & Plastering", subtext_hi: "चिनाई, टाइल्स व प्लास्टर", icon: "fa-trowel-bricks", count: 18, rating: 4.8, color: "#dbeafe", textColor: "#1d4ed8" },
+      { id: "events", name_en: "Events & Catering", name_hi: "इवेंट्स एवं कैटरिंग", subtext_en: "Waiters, Chefs & Tent Setup", subtext_hi: "वेटर, हलवाई व टेंट", icon: "fa-champagne-glasses", count: 12, rating: 4.9, color: "#fce7f3", textColor: "#be185d" },
+      { id: "shifting", name_en: "House & Office Shifting", name_hi: "सामान शिफ्टिंग एवं लोडिंग", subtext_en: "Packing, Loading & Unloading", subtext_hi: "पैकिंग, लोडिंग व अनलोडिंग", icon: "fa-truck-ramp-box", count: 15, rating: 4.7, color: "#fef3c7", textColor: "#b45309" },
+      { id: "textile", name_en: "Textile Mill & Fabric", name_hi: "टेक्सटाइल मिल एवं थान हेल्पर", subtext_en: "Fabric Cutting & Roll Handling", subtext_hi: "कपड़ा कटिंग व रोल लोडिंग", icon: "fa-scissors", count: 22, rating: 4.8, color: "#dcfce7", textColor: "#15803d" }
     ],
     services: [
       { id: "srv-1", category_id: "construction", name_en: "Bricklayer / Master Mason", name_hi: "राजमिस्त्री (चिनाई कार्य)", base_rate: 850.0, unit: "day", popular: true },
@@ -119,7 +120,20 @@
   function loadLocalDb() {
     try {
       const stored = localStorage.getItem("workmate_client_db");
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.schemaVersion >= 2 && parsed.categories && parsed.categories[0].rating) {
+          return parsed;
+        }
+        // Upgrade existing local storage with updated ratings and metadata
+        parsed.schemaVersion = 2;
+        parsed.categories = DEFAULT_DB.categories;
+        if (!parsed.services || !parsed.services[0].desc_en) {
+          parsed.services = DEFAULT_DB.services;
+        }
+        localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
+        return parsed;
+      }
     } catch (e) {}
     localStorage.setItem("workmate_client_db", JSON.stringify(DEFAULT_DB));
     return DEFAULT_DB;
@@ -443,6 +457,28 @@
         eta_minutes: b.eta_minutes || 12,
         otp: b.otp || "5603",
         status: b.status || "in_progress"
+      });
+    }
+
+        // 14. Full Database Records Explorer
+    if (pathname === "/api/database/records") {
+      return jsonResponse({
+        success: true,
+        schema_version: db.schemaVersion || 2,
+        storage_type: "In-Browser SQLite / LocalStorage Engine",
+        stats: {
+          total_users: db.users.length,
+          total_bookings: db.bookings.length,
+          total_services: db.services.length,
+          total_workers: db.workers.length,
+          total_transactions: db.transactions.length
+        },
+        users: db.users,
+        bookings: db.bookings,
+        services: db.services,
+        workers: db.workers,
+        transactions: db.transactions,
+        categories: db.categories
       });
     }
 

@@ -178,6 +178,14 @@
 
         <!-- ================= Screen 0: Dedicated Admin Master Rates & Banks Dashboard ================= -->
         <section id="screen-admin" class="screen-view">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
+            <button type="button" onclick="switchTab('home')" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-arrow-left"></i> <span data-i18n="backToHome">Back to Home</span>
+            </button>
+            <button type="button" onclick="switchTab('account')" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:700; color:#1e293b; cursor:pointer; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-user"></i> <span data-i18n="navAccount">My Account</span>
+            </button>
+          </div>
           <div class="admin-panel-hero">
             <div class="admin-hero-left">
               <h2 style="font-size:17px; font-weight:800; color:#1e3a8a; display:flex; align-items:center; gap:8px;">
@@ -441,19 +449,20 @@
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
 
-            <!-- Admin Console Trigger (Hidden from regular customers, visible only to Admin) -->
-            <div class="account-menu-item" id="menuAdminConsoleItem" onclick="openAdminConsoleModal()" style="display:none;">
+            <!-- 4 Core Service Modules & Rates (Accessible to view/edit) -->
+            <div class="account-menu-item" id="menuAdminConsoleItem" onclick="switchTab('admin')">
               <div class="account-item-left">
-                <i class="fa-solid fa-sliders" style="color:#eab308;"></i>
-                <span data-i18n="menuAdminConsole">Admin Rate &amp; Bank Console</span>
+                <i class="fa-solid fa-sliders" style="color:#2563eb;"></i>
+                <span data-i18n="menuAdminConsole">4 Core Service Modules &amp; Base Rates</span>
               </div>
-              <span class="admin-badge-pill"><i class="fa-solid fa-gear"></i> ADMIN</span>
+              <span class="admin-badge-pill" style="background:#e0f2fe; color:#0369a1;"><i class="fa-solid fa-sliders"></i> 4 MODULES</span>
             </div>
 
-            <div class="account-menu-item" id="menuDatabaseSyncItem" onclick="openDatabaseModal()" style="display:none;">
+            <!-- Project Database & Records Explorer -->
+            <div class="account-menu-item" id="menuDatabaseSyncItem" onclick="openDatabaseModal()">
               <div class="account-item-left">
                 <i class="fa-solid fa-database" style="color:#0d9488;"></i>
-                <span data-i18n="menuDatabase">Database &amp; Cloud Sync (Firebase)</span>
+                <span data-i18n="menuDatabase">Project Database &amp; Records Explorer</span>
               </div>
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
@@ -504,13 +513,13 @@
 
       <!-- Bottom Navigation Bar (Page 1 Mockup) -->
       <nav class="bottom-nav-bar">
-        <button id="nav-admin" class="nav-item-btn" onclick="switchTab('admin')" style="display:none; color:#1e40af;">
-          <i class="fa-solid fa-crown"></i>
-          <span>Admin</span>
-        </button>
         <button id="nav-home" class="nav-item-btn active" onclick="switchTab('home')">
           <i class="fa-solid fa-house"></i>
           <span data-i18n="navHome">Home</span>
+        </button>
+        <button id="nav-admin" class="nav-item-btn" onclick="switchTab('admin')" style="color:#1e40af;">
+          <i class="fa-solid fa-sliders"></i>
+          <span data-i18n="navAdmin">4 Modules</span>
         </button>
         <button id="nav-orders" class="nav-item-btn" onclick="switchTab('orders')">
           <i class="fa-solid fa-bag-shopping"></i>

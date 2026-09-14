@@ -674,6 +674,12 @@ def create_review(data: Dict[str, Any]) -> Dict[str, Any]:
         conn.close()
         return {"id": rev_id, "success": True}
 
+def get_all_users() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM users ORDER BY joined_date DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
 def get_user_profile(user_id: Optional[str] = None) -> Dict[str, Any]:
     conn = get_connection()
     uid = user_id or 'u-1'
