@@ -156,10 +156,10 @@ class Review(BaseModel):
     date_str: str
 
 class UserProfileUpdate(BaseModel):
-    name: str = Field(..., min_length=2)
-    phone: str = Field(..., min_length=10)
-    address: str = Field(..., min_length=5)
-    city: str = Field(..., min_length=2)
+    name: str = Field(..., min_length=1)
+    phone: str = Field(..., min_length=5)
+    address: Optional[str] = ""
+    city: Optional[str] = ""
     email: Optional[str] = None
 
 class AuthLoginRequest(BaseModel):

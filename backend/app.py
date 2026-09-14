@@ -301,14 +301,15 @@ def view_profile(user_id: Optional[str] = None):
     return get_user_profile(user_id)
 
 @app.put("/api/user/profile")
-def edit_profile(payload: UserProfileUpdate, user_id: Optional[str] = "u-1"):
+def edit_profile(payload: UserProfileUpdate, user_id: Optional[str] = None):
+    uid = user_id or "u-1"
     updated = update_user_profile(
         name=payload.name,
         phone=payload.phone,
         address=payload.address,
         city=payload.city,
         email=payload.email,
-        user_id=user_id
+        user_id=uid
     )
     return {
         "success": True,

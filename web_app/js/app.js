@@ -248,6 +248,9 @@ function checkUserSession() {
 
   try {
     state.session = JSON.parse(savedSession);
+    if (state.session && state.session.user) {
+      state.userProfile = state.session.user;
+    }
     if (authView) authView.style.display = "none";
     if (viewportWrapper) viewportWrapper.style.display = "flex";
     if (appContainer) appContainer.style.display = "flex";
@@ -477,6 +480,10 @@ function switchTab(tabId) {
 
 async function loadInitialData() {
   try {
+    const currentUid = (state.session && state.session.user && state.session.user.id) 
+      ? state.session.user.id 
+      : (state.session && state.session.role === "admin" ? "admin-1" : "u-1");
+
     const [catsRes, servsRes, workersRes, bookingsRes, walletRes, txsRes, revsRes, profileRes] = await Promise.all([
       fetch("/api/categories"),
       fetch("/api/services"),
@@ -485,7 +492,7 @@ async function loadInitialData() {
       fetch("/api/wallet"),
       fetch("/api/wallet/transactions"),
       fetch("/api/reviews"),
-      fetch("/api/user/profile")
+      fetch(`/api/user/profile?user_id=${encodeURIComponent(currentUid)}`)
     ]);
 
     state.categories = await catsRes.json();
@@ -778,19 +785,41 @@ function renderProfile() {
   const isAdmin = state.session && state.session.role === "admin";
 
   // Dedicated admin profile vs customer profile
-  const p = isAdmin ? {
-    name: "admin",
-    phone: "7878193644",
-    email: "bhavarthhapani7@gmail.com",
-    address: "",
-    city: "",
-    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
-    member_id: "WM-ADMIN-001",
-    account_type: isHi ? "सिस्टम प्रशासक (Admin)" : "System Administrator",
-    joined_date: isHi ? "जनवरी 2026" : "January 2026",
-    trust_score: 5.0,
-    kyc_status: "verified"
-  } : (state.userProfile || {});
+  let p = state.userProfile;
+  if (!p) {
+    if (isAdmin) {
+      p = {
+        id: "admin-1",
+        name: "admin",
+        phone: "7878193644",
+        email: "bhavarthhapani7@gmail.com",
+        address: "",
+        city: "",
+        photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
+        member_id: "WM-ADMIN-001",
+        account_type: isHi ? "सिस्टम प्रशासक (Admin)" : "System Administrator",
+        joined_date: isHi ? "जनवरी 2026" : "January 2026",
+        trust_score: 5.0,
+        kyc_status: "verified"
+      };
+    } else {
+      p = {
+        id: "u-1",
+        name: "Ramesh Kumar",
+        phone: "+91 98765 43210",
+        email: "ramesh.kumar@workmate.in",
+        address: "Flat 402, Lotus Tower, Sector 14",
+        city: "Noida, Uttar Pradesh",
+        photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+        aadhaar_masked: "•••• •••• 9012",
+        member_id: "WM-USER-89104",
+        account_type: "Customer Premium",
+        joined_date: "January 15, 2026",
+        trust_score: 4.9,
+        kyc_status: "verified"
+      };
+    }
+  }
 
   const nameEl = document.getElementById("accountUserName");
   const phoneEl = document.getElementById("accountUserPhone");
@@ -804,54 +833,59 @@ function renderProfile() {
 
   const grid = document.getElementById("accountDetailsGrid");
   if (grid) {
+    const fullAddress = [p.address, p.city].filter(Boolean).join(", ");
     if (isAdmin) {
       grid.innerHTML = `
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-lock"></i> ${dict.memberIdLabel}</div>
-          <div class="detail-value">${p.member_id}</div>
+          <div class="detail-value">${p.member_id || 'WM-ADMIN-001'}</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-shield-halved"></i> ${isHi ? 'भूमिका' : 'Role'}</div>
-          <div class="detail-value" style="color:#1e40af; font-weight:800;">${p.account_type}</div>
+          <div class="detail-value" style="color:#1e40af; font-weight:800;">${isHi ? 'सिस्टम प्रशासक' : (p.account_type || 'System Administrator')}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
           <div class="detail-label"><i class="fa-solid fa-envelope"></i> Email (ईमेल)</div>
-          <div class="detail-value" style="color:#0f172a; font-weight:700;">${p.email}</div>
+          <div class="detail-value" style="color:#0f172a; font-weight:700;">${p.email || 'bhavarthhapani7@gmail.com'}</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-phone"></i> ${isHi ? 'मोबाइल' : 'Mobile'}</div>
-          <div class="detail-value">${p.phone}</div>
+          <div class="detail-value">${p.phone || '7878193644'}</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
-          <div class="detail-value">${p.joined_date}</div>
+          <div class="detail-value">${p.joined_date || (isHi ? 'जनवरी 2026' : 'January 2026')}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
-          <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? 'पता' : 'Address'}</div>
-          <div class="detail-value" style="color:#94a3b8; font-style:italic;">— (Blank)</div>
+          <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? 'पता एवं स्थान' : 'Address & City/State'}</div>
+          <div class="detail-value" style="${fullAddress ? 'color:#0f172a; font-weight:700;' : 'color:#94a3b8; font-style:italic;'}">
+            ${fullAddress ? fullAddress : (isHi ? '— (खाली / सेट नहीं)' : '— (Blank / Not Set)')}
+          </div>
         </div>
       `;
     } else {
       grid.innerHTML = `
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-lock"></i> ${dict.memberIdLabel}</div>
-          <div class="detail-value">${p.member_id}</div>
+          <div class="detail-value">${p.member_id || 'WM-USER-89104'}</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-shield-halved"></i> ${dict.aadhaarLabel}</div>
-          <div class="detail-value" style="color:#10b981;">✓ ${isHi ? "सत्यापित" : "Verified"} (${p.aadhaar_masked})</div>
+          <div class="detail-value" style="color:#10b981;">✓ ${isHi ? "सत्यापित" : "Verified"} (${p.aadhaar_masked || '•••• •••• 9012'})</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-crown"></i> ${dict.accountTypeLabel}</div>
-          <div class="detail-value">${isHi ? "प्रीमियम ग्राहक" : p.account_type}</div>
+          <div class="detail-value">${isHi ? "प्रीमियम ग्राहक" : (p.account_type || "Customer Premium")}</div>
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
-          <div class="detail-value">${p.joined_date}</div>
+          <div class="detail-value">${p.joined_date || "January 15, 2026"}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
           <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? "पंजीकृत सेवा का पता" : "Registered Service Address"}</div>
-          <div class="detail-value">${p.address}, ${p.city}</div>
+          <div class="detail-value" style="${fullAddress ? 'color:#0f172a; font-weight:700;' : 'color:#94a3b8; font-style:italic;'}">
+            ${fullAddress ? fullAddress : (isHi ? '— (खाली / सेट नहीं)' : '— (Blank / Not Set)')}
+          </div>
         </div>
       `;
     }
@@ -862,7 +896,7 @@ function renderProfile() {
 
 function openEditProfileModal() {
   const isAdmin = state.session && state.session.role === "admin";
-  const p = isAdmin ? {
+  const p = state.userProfile || (isAdmin ? {
     name: "admin",
     phone: "7878193644",
     email: "bhavarthhapani7@gmail.com",
@@ -870,15 +904,23 @@ function openEditProfileModal() {
     city: "",
     member_id: "WM-ADMIN-001",
     aadhaar_masked: ""
-  } : state.userProfile;
+  } : {
+    name: "Ramesh Kumar",
+    phone: "+91 98765 43210",
+    email: "ramesh.kumar@workmate.in",
+    address: "Flat 402, Lotus Tower, Sector 14",
+    city: "Noida, Uttar Pradesh",
+    member_id: "WM-USER-89104",
+    aadhaar_masked: "•••• •••• 9012"
+  });
 
-  document.getElementById("editProfileName").value = p.name;
-  document.getElementById("editProfilePhone").value = p.phone;
-  document.getElementById("editProfileEmail").value = p.email || "";
+  document.getElementById("editProfileName").value = p.name || (isAdmin ? "admin" : "Ramesh Kumar");
+  document.getElementById("editProfilePhone").value = p.phone || (isAdmin ? "7878193644" : "+91 98765 43210");
+  document.getElementById("editProfileEmail").value = p.email || (isAdmin ? "bhavarthhapani7@gmail.com" : "");
   document.getElementById("editProfileAddress").value = p.address || "";
   document.getElementById("editProfileCity").value = p.city || "";
-  document.getElementById("editProfileMemberId").value = p.member_id;
-  document.getElementById("editProfileAadhaar").value = p.aadhaar_masked ? `Verified UIDAI: ${p.aadhaar_masked}` : "—";
+  document.getElementById("editProfileMemberId").value = p.member_id || (isAdmin ? "WM-ADMIN-001" : "WM-USER-89104");
+  document.getElementById("editProfileAadhaar").value = p.aadhaar_masked ? `Verified UIDAI: ${p.aadhaar_masked}` : (isAdmin ? "—" : "•••• •••• 9012");
 
   document.getElementById("modalEditProfile").classList.add("active");
 }
@@ -886,6 +928,10 @@ function openEditProfileModal() {
 async function submitProfileEdit(event) {
   event.preventDefault();
   const isHi = state.lang === "hi";
+  const isAdmin = state.session && state.session.role === "admin";
+  const currentUid = (state.session && state.session.user && state.session.user.id) 
+    ? state.session.user.id 
+    : (isAdmin ? "admin-1" : "u-1");
 
   const name = document.getElementById("editProfileName").value.trim();
   const phone = document.getElementById("editProfilePhone").value.trim();
@@ -894,15 +940,20 @@ async function submitProfileEdit(event) {
   const city = document.getElementById("editProfileCity").value.trim();
 
   try {
-    const res = await fetch("/api/user/profile", {
+    const res = await fetch(`/api/user/profile?user_id=${encodeURIComponent(currentUid)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, phone, email, address, city })
     });
 
-    if (!res.ok) throw new Error("Profile update failed");
     const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || (isHi ? "प्रोफाइल अपडेट विफल रही" : "Profile update failed"));
+
     state.userProfile = data.profile;
+    if (state.session) {
+      state.session.user = { ...(state.session.user || {}), ...data.profile };
+      localStorage.setItem("workmate_session", JSON.stringify(state.session));
+    }
     closeModal("modalEditProfile");
     showToast(isHi ? "प्रोफाइल सफलतापूर्वक अपडेट हो गई!" : "Profile updated successfully!", "success");
 

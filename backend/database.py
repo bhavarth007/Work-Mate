@@ -194,7 +194,7 @@ def init_db():
 
         # System Administrator Profile (bhavarthhapani7@gmail.com / 7878193644)
         cursor.execute("""
-            INSERT OR REPLACE INTO users (
+            INSERT OR IGNORE INTO users (
                 id, name, phone, email, address, city, photo,
                 aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status
             ) VALUES (
@@ -705,17 +705,31 @@ def get_user_profile(user_id: Optional[str] = None) -> Dict[str, Any]:
     }
 
 def update_user_profile(name: str, phone: str, address: str, city: str, email: Optional[str] = None, user_id: str = "u-1") -> Dict[str, Any]:
+    uid = user_id or "u-1"
     with _lock:
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("""
-            UPDATE users
-            SET name = ?, phone = ?, address = ?, city = ?, email = COALESCE(?, email)
-            WHERE id = ?
-        """, (name, phone, address, city, email, user_id))
+        cursor.execute("SELECT id FROM users WHERE id = ?", (uid,))
+        exists = cursor.fetchone()
+        if exists:
+            cursor.execute("""
+                UPDATE users
+                SET name = ?, phone = ?, address = ?, city = ?, email = COALESCE(?, email)
+                WHERE id = ?
+            """, (name, phone, address or "", city or "", email, uid))
+        else:
+            is_admin = uid in ["admin-1", "admin"]
+            photo = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" if is_admin else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+            member_id = "WM-ADMIN-001" if is_admin else "WM-USER-89104"
+            acc_type = "System Administrator" if is_admin else "Customer Premium"
+            joined = "January 2026" if is_admin else "January 15, 2026"
+            cursor.execute("""
+                INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, 5.0, 'verified')
+            """, (uid, name, phone, email or "", address or "", city or "", photo, member_id, acc_type, joined))
         conn.commit()
         conn.close()
-        return get_user_profile(user_id)
+        return get_user_profile(uid)
 
 def get_system_config() -> Dict[str, Any]:
     conn = get_connection()
