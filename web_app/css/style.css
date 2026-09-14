@@ -77,17 +77,19 @@ body {
   }
 }
 
-/* App Header */
+/* App Header (Vibrant WorkMate Blue) */
 .app-header {
-  background: var(--surface);
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #1e40af, #1a56db);
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 25;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
 }
 
 .header-left {
@@ -100,20 +102,20 @@ body {
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: var(--text-muted);
+  color: #bfdbfe;
   font-weight: 500;
   cursor: pointer;
 }
 
 .location-dropdown i.fa-location-dot {
-  color: var(--danger);
+  color: #f87171;
   font-size: 13px;
 }
 
 .user-greeting {
   font-size: 17px;
   font-weight: 800;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .header-right {
@@ -126,7 +128,7 @@ body {
 .google-translate-btn {
   background: #ffffff;
   border: 1.5px solid #cbd5e1;
-  color: #1e293b;
+  color: #1e3a8a;
   padding: 6px 12px;
   border-radius: var(--radius-full);
   font-size: 12px;
@@ -135,8 +137,149 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
+}
+
+.google-translate-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.google-translate-btn .translate-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a56db;
+  font-size: 14px;
+}
+
+.google-translate-btn .lang-indicator {
+  display: inline-block;
+  background: #1a56db;
+  color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* Dedicated Fullscreen Auth View */
+.auth-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+}
+
+.auth-card-main {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+.auth-header-logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-logo-badge {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #1e40af, #1a56db);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 28px;
+  margin: 0 auto 12px;
+  box-shadow: 0 10px 20px rgba(26, 86, 219, 0.3);
+}
+
+.auth-tabs-row {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.auth-tab-item {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-item.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Admin Console Badges & Routing */
+.admin-badge-pill {
+  background: #fef08a;
+  color: #854d0e;
+  border: 1px solid #facc15;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-bank-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-bank-card.active-primary {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.admin-rate-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+
+.admin-rate-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
 }
 
 .google-translate-btn:hover {

@@ -14,7 +14,8 @@ from .models import (
     Category, Service, Worker, Booking, BookingCreate,
     OTPVerifyRequest, BookingStatusUpdateRequest,
     WalletTransaction, WalletDepositRequest, WalletPayoutRequest,
-    WorkerOnboardRequest, ReviewCreate, Review, UserProfileUpdate
+    WorkerOnboardRequest, ReviewCreate, Review, UserProfileUpdate,
+    AuthLoginRequest, ServiceRateUpdate
 )
 from .database import (
     init_db, get_categories, get_services, get_service_by_id,
@@ -23,7 +24,9 @@ from .database import (
     update_booking_status, verify_booking_otp,
     get_wallet, deposit_wallet, payout_wallet,
     get_transactions, get_reviews, create_review,
-    get_user_profile, update_user_profile
+    get_user_profile, update_user_profile,
+    update_service_rate, get_admin_banks, switch_primary_bank,
+    get_admin_financial_stats
 )
 
 # Initialize database schema and seeds
@@ -311,6 +314,72 @@ def edit_profile(payload: UserProfileUpdate):
         "message": "Profile updated successfully!",
         "profile": updated
     }
+
+# ----------------- Auth & Session Management ----------------- #
+
+@app.post("/api/auth/login")
+def login(payload: AuthLoginRequest):
+    ident = payload.identifier.strip().lower()
+    if payload.role == "admin" or ident in ["admin", "admin@workmate.in"]:
+        # Admin authentication
+        valid_admins = ["admin", "admin@workmate.in"]
+        if ident in valid_admins and payload.password == "admin123":
+            return {
+                "success": True,
+                "token": "wm_admin_sec_token_9901",
+                "role": "admin",
+                "user": {
+                    "id": "admin-1",
+                    "name": "WorkMate Admin (प्रशासक)",
+                    "email": "admin@workmate.in",
+                    "role": "admin",
+                    "member_id": "WM-ADMIN-001"
+                }
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Admin ID or Password. (Default: admin / admin123)"
+            )
+    else:
+        # Customer Phone login
+        profile = get_user_profile()
+        return {
+            "success": True,
+            "token": "wm_cust_sec_token_4402",
+            "role": "customer",
+            "user": profile
+        }
+
+# ----------------- Admin Service Rate & Bank Routing ----------------- #
+
+@app.put("/api/services/{service_id}/rate")
+def admin_update_rate(service_id: str, payload: ServiceRateUpdate):
+    updated = update_service_rate(service_id, payload.base_rate)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {
+        "success": True,
+        "message": f"Updated {updated['name_en']} base rate to ₹{payload.base_rate:,.2f}",
+        "service": updated
+    }
+
+@app.get("/api/admin/banks")
+def admin_list_banks():
+    return get_admin_banks()
+
+@app.post("/api/admin/banks/{bank_id}/switch")
+def admin_switch_bank(bank_id: str):
+    updated_banks = switch_primary_bank(bank_id)
+    return {
+        "success": True,
+        "message": "Primary settlement bank account switched successfully! Failover standby engaged.",
+        "banks": updated_banks
+    }
+
+@app.get("/api/admin/financial-stats")
+def admin_financial_stats():
+    return get_admin_financial_stats()
 
 # ----------------- Static Web Client Mount ----------------- #
 

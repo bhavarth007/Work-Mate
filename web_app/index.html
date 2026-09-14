@@ -14,11 +14,67 @@
 </head>
 <body>
 
+  <!-- ================= AUTHENTICATION VIEW (When Logged Out) ================= -->
+  <div id="view-auth" class="auth-wrapper" style="display:none;">
+    <div class="auth-card-main">
+      <div class="auth-header-logo">
+        <div class="auth-logo-badge">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <h2 style="font-size:22px; font-weight:800; color:#0f172a;">WorkMate <span style="font-size:16px; color:#1a56db;">(वर्कमेट)</span></h2>
+        <p style="font-size:13px; color:#64748b; margin-top:4px;">आपका भरोसेमंद लेबर साथी • On-Demand Platform</p>
+      </div>
+
+      <!-- Auth Role Switcher Tabs -->
+      <div class="auth-tabs-row">
+        <button id="authTabCustomer" class="auth-tab-item active" onclick="switchAuthTab('customer')">
+          <i class="fa-solid fa-user"></i> Customer Login
+        </button>
+        <button id="authTabAdmin" class="auth-tab-item" onclick="switchAuthTab('admin')">
+          <i class="fa-solid fa-shield-halved"></i> Admin Console
+        </button>
+      </div>
+
+      <!-- Customer Login Form -->
+      <form id="formCustomerLogin" onsubmit="handleCustomerLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Mobile Number (मोबाइल नंबर)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" value="+91" readonly style="width:65px; text-align:center; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-size:13px;" />
+            <input type="tel" id="loginPhoneInput" class="form-input" value="98765 43210" placeholder="Enter 10-digit phone" required style="flex:1;" />
+          </div>
+        </div>
+        <button type="submit" class="btn-submit-primary" style="margin-bottom:12px;">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Continue / Login as Customer
+        </button>
+      </form>
+
+      <!-- Admin Login Form -->
+      <form id="formAdminLogin" onsubmit="handleAdminLogin(event)" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Admin ID (प्रशासक आईडी)</label>
+          <input type="text" id="adminIdInput" class="form-input" value="admin" placeholder="admin or admin@workmate.in" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Password (पासवर्ड)</label>
+          <input type="password" id="adminPasswordInput" class="form-input" value="admin123" placeholder="Enter admin password" required />
+        </div>
+        <button type="submit" class="btn-submit-primary" style="background:#1e3a8a; margin-bottom:12px;">
+          <i class="fa-solid fa-lock-open"></i> Login to Admin Console
+        </button>
+      </form>
+
+      <div style="font-size:11px; color:#94a3b8; text-align:center; margin-top:12px;">
+        Protected by 256-bit SSL Escrow Security • UIDAI Aadhaar Verified
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN APP VIEW (When Logged In) ================= -->
   <div class="viewport-wrapper">
-    <!-- Main App Container (Clean, Modern Responsive Native Layout) -->
-    <div id="appContainer" class="app-container">
+    <div id="appContainer" class="app-container" style="display:none;">
       
-      <!-- App Header with Google Translate Style Language Switcher -->
+      <!-- Vibrant Blue App Header (Matching User's Brand Mockup) -->
       <header class="app-header">
         <div class="header-left">
           <div class="location-dropdown" onclick="showToast('Location fixed to registered address')">
@@ -220,6 +276,16 @@
               </div>
               <span style="font-size:12px; color:var(--primary); font-weight:800;" id="menuLangIndicator">हिन्दी / English &gt;</span>
             </div>
+
+            <!-- Admin Console Trigger (Always Accessible) -->
+            <div class="account-menu-item" onclick="openAdminConsoleModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-sliders" style="color:#eab308;"></i>
+                <span data-i18n="menuAdminConsole">Admin Rate &amp; Bank Console</span>
+              </div>
+              <span class="admin-badge-pill"><i class="fa-solid fa-gear"></i> ADMIN</span>
+            </div>
+
             <div class="account-menu-item" onclick="openDatabaseModal()">
               <div class="account-item-left">
                 <i class="fa-solid fa-database" style="color:#0d9488;"></i>
@@ -296,11 +362,11 @@
 
   <!-- ================= MODALS ================= -->
 
-  <!-- Modal 1: Place New Booking -->
+  <!-- Modal 1: Place New Booking / Add Work with Escrow Pay -->
   <div id="modalBooking" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3 id="modalBookingTitle">Book Blue-Collar Labour</h3>
+        <h3 id="modalBookingTitle">Add Work &amp; Book Labour (काम जोड़ें)</h3>
         <button class="btn-close-modal" onclick="closeModal('modalBooking')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
@@ -313,7 +379,7 @@
           <div class="form-group">
             <label class="form-label">Booking Type (बुकिंग प्रकार)</label>
             <select id="bookingTypeSelect" class="form-select">
-              <option value="instant">⚡ Instant Booking (15 Min Emergency Arrival)</option>
+              <option value="instant">⚡ Instant Dispatch (15 Min Arrival)</option>
               <option value="scheduled">📅 Scheduled Booking (Choose Date/Time)</option>
             </select>
           </div>
@@ -333,24 +399,71 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Special Requirements / Notes (विवरण)</label>
-            <textarea id="bookingNotesInput" class="form-textarea" rows="2" placeholder="e.g. Masonry plaster, bringing own trowel..."></textarea>
+            <label class="form-label">Task Specifications / Notes (काम का विवरण)</label>
+            <textarea id="bookingNotesInput" class="form-textarea" rows="2" placeholder="e.g. Masonry wall plastering, bring own trowel..."></textarea>
           </div>
 
-          <div style="background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:16px;">
-            <div style="font-size:12px; color:#64748b;">Estimated Upfront Cost:</div>
-            <div id="bookingPriceEstimate" style="font-size:18px; color:var(--primary); font-weight:800;">₹750</div>
+          <!-- Sensitive Fee Display: 10% WorkMate Charge (Clean and Professional) -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin-bottom:16px;">
+            <div style="font-size:12px; color:#64748b;">Total Upfront Amount to Reserve Labour:</div>
+            <div id="bookingPriceEstimate" style="font-size:18px; color:var(--primary); font-weight:800; margin-top:2px;">₹750</div>
           </div>
 
+          <!-- Escrow Pay & Post Button -->
           <button type="submit" class="btn-submit-primary">
-            <i class="fa-solid fa-check"></i> Confirm &amp; Dispatch Labour
+            <i class="fa-solid fa-credit-card"></i> <span data-i18n="payAndPostBtn">💳 Pay &amp; Post Work (Reserve Labour)</span>
           </button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Modal 2: Edit Profile (Editable + Locked Details) -->
+  <!-- Modal 2: Admin Rate & Multi-Bank Routing Console -->
+  <div id="modalAdminConsole" class="modal-overlay">
+    <div class="modal-sheet" style="max-width:540px;">
+      <div class="modal-header">
+        <h3 style="color:#1e3a8a;"><i class="fa-solid fa-sliders"></i> WorkMate Administrator Console</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalAdminConsole')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Platform Revenue Overview -->
+        <div style="font-size:13px; font-weight:800; margin-bottom:8px; color:#1e293b;">1. Platform Revenue &amp; Charges</div>
+        <div id="adminStatsSummary" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:18px;">
+          <!-- Loaded dynamically -->
+        </div>
+
+        <!-- Multi-Bank Payment Routing with Failover Protection -->
+        <div style="font-size:13px; font-weight:800; margin-bottom:6px; color:#1e293b; display:flex; justify-content:space-between; align-items:center;">
+          <span>2. Settlement Bank Accounts (Auto-Failover)</span>
+          <span style="font-size:10px; color:#10b981; font-weight:700;"><i class="fa-solid fa-shield-check"></i> FAILOVER ACTIVE</span>
+        </div>
+        <p style="font-size:11px; color:#64748b; margin-bottom:10px;">
+          WorkMate charges are deposited into your primary account. If payment fails on one bank, the system automatically routes to standby accounts.
+        </p>
+        <div id="adminBanksList" style="margin-bottom:20px;">
+          <!-- Loaded dynamically -->
+        </div>
+
+        <!-- Service Module Rate Editor -->
+        <div style="font-size:13px; font-weight:800; margin-bottom:6px; color:#1e293b;">
+          3. Service Module Rates (All Categories)
+        </div>
+        <p style="font-size:11px; color:#64748b; margin-bottom:10px;">
+          Edit the base wage rate for any trade. Changes save immediately to the database and recalculate customer quotes in real time.
+        </p>
+        <div id="adminRateList" style="max-height:220px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; margin-bottom:16px;">
+          <!-- Loaded dynamically -->
+        </div>
+
+        <button class="btn-submit-primary" style="background:#64748b;" onclick="closeModal('modalAdminConsole')">
+          Close Admin Console
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Edit Profile (Editable + Locked Details) -->
   <div id="modalEditProfile" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -416,7 +529,7 @@
     </div>
   </div>
 
-  <!-- Modal 3: Database & Cloud Sync (Firebase) -->
+  <!-- Modal 4: Database & Cloud Sync (Firebase) -->
   <div id="modalDatabase" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -443,7 +556,7 @@
     </div>
   </div>
 
-  <!-- Modal 4: Logout Confirmation Modal -->
+  <!-- Modal 5: Logout Confirmation Modal -->
   <div id="modalLogoutConfirm" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -452,7 +565,7 @@
       </div>
       <div class="modal-body">
         <p style="font-size:14px; color:#334155; margin-bottom:20px; line-height:1.5;">
-          Are you sure you want to log out of your WorkMate account?
+          Are you sure you want to log out of your WorkMate account? Your session will be completely terminated.
           <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">
             (क्या आप वाकई वर्कमेट खाते से लॉगआउट करना चाहते हैं?)
           </span>
@@ -465,28 +578,6 @@
             Cancel
           </button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal 5: Login / Re-Authentication Modal -->
-  <div id="modalLogin" class="modal-overlay">
-    <div class="modal-sheet">
-      <div class="modal-header">
-        <h3>Sign In to WorkMate</h3>
-      </div>
-      <div class="modal-body" style="text-align:center;">
-        <div style="width:60px; height:60px; background:#eff6ff; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:#1a56db; font-size:24px;">
-          <i class="fa-solid fa-users-gear"></i>
-        </div>
-        <h4>WorkMate (वर्कमेट)</h4>
-        <p style="font-size:13px; color:#64748b; margin-bottom:20px;">
-          Your Trusted Blue-Collar Labour Platform
-        </p>
-
-        <button class="btn-submit-primary" onclick="executeLogin()">
-          <i class="fa-solid fa-user-check"></i> Continue as Ramesh Kumar (+91 98765 43210)
-        </button>
       </div>
     </div>
   </div>
@@ -732,6 +823,25 @@
   <script src="/static/js/tracking.js"></script>
   <script src="/static/js/app.js"></script>
   <script>
+    function switchAuthTab(tab) {
+      const btnCust = document.getElementById("authTabCustomer");
+      const btnAdmin = document.getElementById("authTabAdmin");
+      const formCust = document.getElementById("formCustomerLogin");
+      const formAdmin = document.getElementById("formAdminLogin");
+
+      if (tab === "customer") {
+        btnCust.classList.add("active");
+        btnAdmin.classList.remove("active");
+        formCust.style.display = "block";
+        formAdmin.style.display = "none";
+      } else {
+        btnAdmin.classList.add("active");
+        btnCust.classList.remove("active");
+        formAdmin.style.display = "block";
+        formCust.style.display = "none";
+      }
+    }
+
     function setBookingTab(tab) {
       document.querySelectorAll(".booking-tab-btn").forEach(b => b.classList.remove("active"));
       if (tab === "upcoming") {

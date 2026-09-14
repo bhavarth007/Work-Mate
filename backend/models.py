@@ -162,3 +162,12 @@ class UserProfileUpdate(BaseModel):
     city: str = Field(..., min_length=2)
     email: Optional[str] = None
 
+class AuthLoginRequest(BaseModel):
+    role: Literal["customer", "admin"] = "customer"
+    identifier: str  # Phone number for customer, username/email for admin
+    password: Optional[str] = None
+    otp: Optional[str] = "1234"
+
+class ServiceRateUpdate(BaseModel):
+    base_rate: float = Field(..., gt=0)
+

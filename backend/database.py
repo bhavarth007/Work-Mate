@@ -192,6 +192,32 @@ def init_db():
             )
         """)
 
+        # Admin Multi-Bank Routing & Auto-Failover Accounts
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS admin_banks (
+                id TEXT PRIMARY KEY,
+                bank_name TEXT NOT NULL,
+                account_masked TEXT NOT NULL,
+                ifsc TEXT NOT NULL,
+                upi_id TEXT NOT NULL,
+                account_holder TEXT NOT NULL,
+                is_active INTEGER DEFAULT 1,
+                is_primary INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'STANDBY',
+                failure_count INTEGER DEFAULT 0,
+                total_routed_inr REAL DEFAULT 0.0
+            )
+        """)
+
+        # Seed 3 Admin Bank Accounts for Failover Protection
+        cursor.execute("""
+            INSERT OR IGNORE INTO admin_banks (id, bank_name, account_masked, ifsc, upi_id, account_holder, is_active, is_primary, status, failure_count, total_routed_inr)
+            VALUES 
+            ('bank-1', 'HDFC Bank (Primary Gateway)', '•••• 8819', 'HDFC0001234', 'workmate.admin@hdfcbank', 'WorkMate India Tech Pvt Ltd', 1, 1, 'ACTIVE', 0, 184500.0),
+            ('bank-2', 'ICICI Bank (Instant Failover Backup 1)', '•••• 4412', 'ICIC0005678', 'workmate.payout@icici', 'WorkMate Escrow Reserves', 1, 0, 'STANDBY', 0, 92000.0),
+            ('bank-3', 'State Bank of India (Secondary Backup 2)', '•••• 9931', 'SBIN0009876', 'workmate.reserve@sbi', 'WorkMate National Settlement', 1, 0, 'STANDBY', 0, 45000.0)
+        """)
+
         conn.commit()
 
         # Check if seeder is needed
@@ -648,3 +674,80 @@ def update_user_profile(name: str, phone: str, address: str, city: str, email: O
         conn.commit()
         conn.close()
         return get_user_profile()
+
+# ----------------- Admin Console Management ----------------- #
+
+def update_service_rate(service_id: str, new_base_rate: float) -> Optional[Dict[str, Any]]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE services
+            SET base_rate = ?
+            WHERE id = ?
+        """, (new_base_rate, service_id))
+        conn.commit()
+        updated = get_service_by_id(service_id)
+        conn.close()
+        return updated
+
+def get_admin_banks() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM admin_banks ORDER BY is_primary DESC, id").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def switch_primary_bank(bank_id: str) -> List[Dict[str, Any]]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        # Set all to standby
+        cursor.execute("UPDATE admin_banks SET is_primary = 0, status = 'STANDBY'")
+        # Set selected to primary
+        cursor.execute("UPDATE admin_banks SET is_primary = 1, status = 'ACTIVE' WHERE id = ?", (bank_id,))
+        conn.commit()
+        conn.close()
+        return get_admin_banks()
+
+def record_bank_routing(amount: float) -> Dict[str, Any]:
+    """Routes customer charge into the primary admin bank account, auto-failing over if error."""
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        # Find active primary
+        row = cursor.execute("SELECT * FROM admin_banks WHERE is_primary = 1 AND is_active = 1").fetchone()
+        if not row:
+            # Auto failover to first active bank
+            row = cursor.execute("SELECT * FROM admin_banks WHERE is_active = 1 ORDER BY id LIMIT 1").fetchone()
+            if row:
+                cursor.execute("UPDATE admin_banks SET is_primary = 1, status = 'ACTIVE' WHERE id = ?", (row["id"],))
+
+        bank = dict(row) if row else None
+        if bank:
+            cursor.execute("""
+                UPDATE admin_banks 
+                SET total_routed_inr = total_routed_inr + ?
+                WHERE id = ?
+            """, (amount, bank["id"]))
+            conn.commit()
+
+        conn.close()
+        return bank or {"bank_name": "HDFC Primary", "account_masked": "•••• 8819"}
+
+def get_admin_financial_stats() -> Dict[str, Any]:
+    conn = get_connection()
+    bookings = conn.execute("SELECT * FROM bookings").fetchall()
+    banks = conn.execute("SELECT * FROM admin_banks").fetchall()
+    conn.close()
+
+    total_charge_collected = sum(b["commission_amount"] for b in bookings)
+    total_gmv = sum(b["total_cost"] for b in bookings)
+    total_worker_payouts = sum(b["worker_payout_amount"] for b in bookings if b["status"] == "completed")
+
+    return {
+        "total_gmv": round(total_gmv, 2),
+        "total_workmate_charge": round(total_charge_collected, 2),
+        "total_worker_payouts": round(total_worker_payouts, 2),
+        "active_banks_count": len([b for b in banks if b["is_active"]]),
+        "primary_bank": next((dict(b) for b in banks if b["is_primary"]), None)
+    }

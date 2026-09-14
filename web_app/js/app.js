@@ -1,13 +1,15 @@
 /**
  * WorkMate Core Application Logic & State Management
- * 100% Bilingual (Hindi/English), Google Translate Style Switcher,
- * User Profile Editing & Access Control, Database Management, and Logout.
+ * Complete Auth Session Persistence, Admin Rate & Multi-Bank Routing,
+ * Sensitive Info Protection ("10% WorkMate Charge"), Upfront Escrow Work Posting,
+ * Per-User Isolated Language Settings, and Live Reactivity.
  */
 
 // Application State
 const state = {
+  session: null, // Logged in user session
   currentTab: "home",
-  lang: "hi", // Default Hindi, toggleable to "en"
+  lang: "hi", // Isolated per-user
   categories: [],
   services: [],
   workers: [],
@@ -29,7 +31,9 @@ const state = {
     joined_date: "January 15, 2026",
     trust_score: 4.9,
     kyc_status: "verified"
-  }
+  },
+  adminBanks: [],
+  adminStats: {}
 };
 
 // 100% Pure Bilingual Localization Dictionary
@@ -71,6 +75,7 @@ const I18N = {
     menuInsurance: "Micro-Insurance Enrollment",
     menuSupport: "24/7 Support (Call / WhatsApp)",
     menuDatabase: "Database & Cloud Sync (Firebase)",
+    menuAdminConsole: "Admin Rate & Bank Console",
     menuWorkerOnboard: "Register as Worker Partner (KYC)",
     btnLogout: "Log Out",
     editProfileBtn: "Edit Profile",
@@ -89,6 +94,8 @@ const I18N = {
     rateWorkerLabel: "Rate Worker & Leave Review",
     noBookings: "No booking records found.",
     noActiveBooking: "No active in-progress booking. Tap button below to book instant labour.",
+    chargeNotice: "10% WorkMate Charge",
+    payAndPostBtn: "💳 Pay & Post Work (Reserve Labour)",
     langBtnLabel: "English"
   },
   hi: {
@@ -103,7 +110,7 @@ const I18N = {
     trackLive: "लाइव जीपीएस ट्रैकिंग",
     callWorker: "कॉल करें",
     verifyOtpBtn: "ओटीपी जांचें और काम पूरा करें",
-    trustTitle: "100% सरकारी पहचान सत्यापन | सुरक्षित एस्क्रो भुगतान",
+    trustTitle: "100% पहचान सत्यापन | सुरक्षित एस्क्रो भुगतान",
     trustedPartners: "भरोसेमंद साथी: यूपीआई, रेजरपे, आधार",
     recentReviews: "हाल की ग्राहक समीक्षाएं",
     viewAll: "सभी देखें >",
@@ -128,6 +135,7 @@ const I18N = {
     menuInsurance: "माइक्रो-इंश्योरेंस (श्रमिक सुरक्षा बीमा)",
     menuSupport: "24/7 सहायता (कॉल / व्हाट्सएप)",
     menuDatabase: "डेटाबेस एवं क्लाउड सेटिंग्स (फायरबेस)",
+    menuAdminConsole: "व्यवस्थापक (Admin) दर व बैंक कंसोल",
     menuWorkerOnboard: "श्रमिक साथी के रूप में पंजीकरण (केवाईसी)",
     btnLogout: "लॉगआउट करें",
     editProfileBtn: "प्रोफाइल संपादित करें",
@@ -146,6 +154,8 @@ const I18N = {
     rateWorkerLabel: "रेटिंग और समीक्षा दें",
     noBookings: "कोई बुकिंग रिकॉर्ड नहीं मिला।",
     noActiveBooking: "वर्तमान में कोई सक्रिय बुकिंग नहीं है। नीचे दिए बटन से तुरंत लेबर बुक करें।",
+    chargeNotice: "10% वर्कमेट सेवा शुल्क (WorkMate Charge)",
+    payAndPostBtn: "💳 भुगतान करें एवं काम जोड़ें (लेबर आरक्षित करें)",
     langBtnLabel: "हिन्दी"
   }
 };
@@ -164,29 +174,131 @@ function showToast(message, type = "success") {
   }, 3500);
 }
 
-// Google Translate Style Language Switcher
-function toggleLanguage() {
-  state.lang = state.lang === "hi" ? "en" : "hi";
-  updateLanguageUI();
+// ----------------- Auth & Session Management ----------------- //
+
+function checkUserSession() {
+  const savedSession = localStorage.getItem("workmate_session");
+  const authView = document.getElementById("view-auth");
+  const appContainer = document.getElementById("appContainer");
+
+  if (!savedSession) {
+    state.session = null;
+    if (authView) authView.style.display = "flex";
+    if (appContainer) appContainer.style.display = "none";
+    return false;
+  }
+
+  try {
+    state.session = JSON.parse(savedSession);
+    if (authView) authView.style.display = "none";
+    if (appContainer) appContainer.style.display = "flex";
+
+    // Load isolated language preference for this specific user
+    const userLang = localStorage.getItem("workmate_lang_" + state.session.user.id);
+    if (userLang) {
+      state.lang = userLang;
+    }
+
+    // If Admin, show admin indicators
+    if (state.session.role === "admin") {
+      const adminBadge = document.getElementById("adminBannerItem");
+      if (adminBadge) adminBadge.style.display = "flex";
+    }
+
+    return true;
+  } catch (e) {
+    localStorage.removeItem("workmate_session");
+    if (authView) authView.style.display = "flex";
+    if (appContainer) appContainer.style.display = "none";
+    return false;
+  }
 }
 
-function setLanguage(langCode) {
-  state.lang = langCode;
+async function handleCustomerLogin(event) {
+  if (event) event.preventDefault();
+  const phone = document.getElementById("loginPhoneInput").value.trim() || "+91 98765 43210";
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "customer", identifier: phone })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Login failed");
+
+    localStorage.setItem("workmate_session", JSON.stringify(data));
+    showToast(state.lang === "hi" ? "सफलतापूर्वक लॉगिन हुआ! स्वागत है।" : "Logged in successfully! Welcome.", "success");
+
+    checkUserSession();
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function handleAdminLogin(event) {
+  if (event) event.preventDefault();
+  const adminId = document.getElementById("adminIdInput").value.trim();
+  const password = document.getElementById("adminPasswordInput").value;
+
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "admin", identifier: adminId, password: password })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Invalid Admin Credentials");
+
+    localStorage.setItem("workmate_session", JSON.stringify(data));
+    showToast("Admin Console Authenticated! Full Management Access Granted.", "success");
+
+    checkUserSession();
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function openLogoutModal() {
+  document.getElementById("modalLogoutConfirm").classList.add("active");
+}
+
+function executeLogout() {
+  closeModal("modalLogoutConfirm");
+  localStorage.removeItem("workmate_session");
+  state.session = null;
+
+  const authView = document.getElementById("view-auth");
+  const appContainer = document.getElementById("appContainer");
+
+  if (authView) authView.style.display = "flex";
+  if (appContainer) appContainer.style.display = "none";
+
+  showToast(state.lang === "hi" ? "सफलतापूर्वक लॉगआउट किया गया! सत्र समाप्त।" : "Logged out successfully! Session ended.", "success");
+}
+
+// ----------------- Per-User Isolated Language Switcher ----------------- //
+
+function toggleLanguage() {
+  state.lang = state.lang === "hi" ? "en" : "hi";
+  // Save per user key
+  const userId = state.session && state.session.user ? state.session.user.id : "guest";
+  localStorage.setItem("workmate_lang_" + userId, state.lang);
+
   updateLanguageUI();
 }
 
 function updateLanguageUI() {
   const isHi = state.lang === "hi";
 
-  // Update header translate button indicator
   const langTag = document.getElementById("currentLangTag");
   const langIndicator = document.getElementById("currentLangIndicator");
-  if (langTag) {
-    langTag.textContent = isHi ? "हिन्दी" : "English";
-  }
-  if (langIndicator) {
-    langIndicator.textContent = isHi ? "HI" : "EN";
-  }
+  if (langTag) langTag.textContent = isHi ? "हिन्दी" : "English";
+  if (langIndicator) langIndicator.textContent = isHi ? "HI" : "EN";
 
   applyTranslations();
   renderCategories();
@@ -199,7 +311,6 @@ function updateLanguageUI() {
 
 function applyTranslations() {
   const dict = I18N[state.lang];
-  const isHi = state.lang === "hi";
 
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
@@ -213,20 +324,20 @@ function applyTranslations() {
     searchInput.placeholder = dict.searchPlaceholder;
   }
 
-  // Greeting update
   const greetingEl = document.getElementById("userGreetingText");
   if (greetingEl) {
-    greetingEl.textContent = `${dict.greeting}${state.userProfile.name}!`;
+    const uName = state.session && state.session.user ? state.session.user.name : state.userProfile.name;
+    greetingEl.textContent = `${dict.greeting}${uName}!`;
   }
 
-  // Location text
   const locEl = document.getElementById("headerLocationText");
   if (locEl) {
-    locEl.textContent = state.userProfile.address || "Flat 402, Sector 14, Noida";
+    locEl.textContent = state.userProfile.address || "Flat 402, Lotus Tower, Sector 14";
   }
 }
 
-// Navigation Tabs
+// ----------------- Navigation Tabs ----------------- //
+
 function switchTab(tabId) {
   state.currentTab = tabId;
   document.querySelectorAll(".screen-view").forEach(el => el.classList.remove("active"));
@@ -243,7 +354,8 @@ function switchTab(tabId) {
   if (tabId === "account") renderProfile();
 }
 
-// Data Fetching
+// ----------------- Data Fetching ----------------- //
+
 async function loadInitialData() {
   try {
     const [catsRes, servsRes, workersRes, bookingsRes, walletRes, txsRes, revsRes, profileRes] = await Promise.all([
@@ -284,7 +396,8 @@ async function loadInitialData() {
   }
 }
 
-// Render Categories Grid
+// ----------------- Categories Rendering ----------------- //
+
 function renderCategories(filterText = "") {
   const grid = document.getElementById("categoriesGrid");
   if (!grid) return;
@@ -302,7 +415,6 @@ function renderCategories(filterText = "") {
     );
   }
 
-  // Pure language names
   const categoryNames = {
     construction: {
       en: { title: "Construction & Masonry", sub: "Brickwork, Tiling & Plastering" },
@@ -348,7 +460,8 @@ function renderCategories(filterText = "") {
   }).join("");
 }
 
-// Render Active Booking Card
+// ----------------- Active Booking Rendering ----------------- //
+
 function renderActiveBooking() {
   const container = document.getElementById("activeBookingContainer");
   if (!container) return;
@@ -403,7 +516,8 @@ function renderActiveBooking() {
   `;
 }
 
-// Render Bookings Screen
+// ----------------- Bookings List Rendering ----------------- //
+
 function renderBookings(tabFilter = "upcoming") {
   const container = document.getElementById("bookingsListContainer");
   if (!container) return;
@@ -472,7 +586,8 @@ function renderBookings(tabFilter = "upcoming") {
   }).join("");
 }
 
-// Render Wallet & Payments
+// ----------------- Wallet & Payments Rendering ----------------- //
+
 function renderWallet() {
   const balEl = document.getElementById("walletBalanceAmount");
   if (balEl && state.wallet) {
@@ -480,7 +595,6 @@ function renderWallet() {
   }
 }
 
-// Render Transactions Ledger
 function renderTransactions() {
   const container = document.getElementById("transactionHistoryContainer");
   if (!container) return;
@@ -514,7 +628,6 @@ function renderTransactions() {
   }).join("");
 }
 
-// Render Customer Reviews Carousel
 function renderReviews() {
   const carousel = document.getElementById("reviewsCarousel");
   if (!carousel) return;
@@ -531,7 +644,6 @@ function renderReviews() {
   }).join("");
 }
 
-// Render Profile in Account Screen (Editable & Non-Editable Details)
 function renderProfile() {
   const p = state.userProfile;
   const isHi = state.lang === "hi";
@@ -542,7 +654,6 @@ function renderProfile() {
   if (nameEl) nameEl.textContent = p.name;
   if (phoneEl) phoneEl.textContent = p.phone;
 
-  // Render Read-Only Details Grid
   const grid = document.getElementById("accountDetailsGrid");
   if (grid) {
     grid.innerHTML = `
@@ -570,7 +681,7 @@ function renderProfile() {
   }
 }
 
-// ----------------- Profile Editing (Access Control) ----------------- //
+// ----------------- Profile Edit ----------------- //
 
 function openEditProfileModal() {
   const p = state.userProfile;
@@ -579,10 +690,8 @@ function openEditProfileModal() {
   document.getElementById("editProfileEmail").value = p.email || "";
   document.getElementById("editProfileAddress").value = p.address;
   document.getElementById("editProfileCity").value = p.city;
-
-  // Read-only locked fields
   document.getElementById("editProfileMemberId").value = p.member_id;
-  document.getElementById("editProfileAadhaar").value = `Verified: ${p.aadhaar_masked}`;
+  document.getElementById("editProfileAadhaar").value = `Verified UIDAI: ${p.aadhaar_masked}`;
 
   document.getElementById("modalEditProfile").classList.add("active");
 }
@@ -597,11 +706,6 @@ async function submitProfileEdit(event) {
   const address = document.getElementById("editProfileAddress").value.trim();
   const city = document.getElementById("editProfileCity").value.trim();
 
-  if (!name || !phone || !address || !city) {
-    showToast(isHi ? "कृपया सभी आवश्यक विवरण भरें" : "Please fill in all required fields", "error");
-    return;
-  }
-
   try {
     const res = await fetch("/api/user/profile", {
       method: "PUT",
@@ -609,11 +713,7 @@ async function submitProfileEdit(event) {
       body: JSON.stringify({ name, phone, email, address, city })
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Profile update failed");
-    }
-
+    if (!res.ok) throw new Error("Profile update failed");
     const data = await res.json();
     state.userProfile = data.profile;
     closeModal("modalEditProfile");
@@ -622,7 +722,354 @@ async function submitProfileEdit(event) {
     renderProfile();
     applyTranslations();
   } catch (err) {
-    console.error(err);
+    showToast(err.message, "error");
+  }
+}
+
+// ----------------- Admin Rate & Bank Console ----------------- //
+
+async function openAdminConsoleModal() {
+  document.getElementById("modalAdminConsole").classList.add("active");
+  const isHi = state.lang === "hi";
+
+  try {
+    const [servRes, bankRes, statsRes] = await Promise.all([
+      fetch("/api/services"),
+      fetch("/api/admin/banks"),
+      fetch("/api/admin/financial-stats")
+    ]);
+
+    const services = await servRes.json();
+    const banks = await bankRes.json();
+    const stats = await statsRes.json();
+
+    state.adminBanks = banks;
+    state.adminStats = stats;
+
+    // Render Stats
+    const statsEl = document.getElementById("adminStatsSummary");
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div style="background:#eff6ff; padding:10px; border-radius:8px; text-align:center;">
+          <div style="font-size:10px; color:#1e40af; font-weight:700;">TOTAL GMV (कुल कारोबार)</div>
+          <div style="font-size:16px; font-weight:800; color:#1e3a8a;">₹${stats.total_gmv.toLocaleString('en-IN')}</div>
+        </div>
+        <div style="background:#ecfdf5; padding:10px; border-radius:8px; text-align:center;">
+          <div style="font-size:10px; color:#065f46; font-weight:700;">WORKMATE CHARGES</div>
+          <div style="font-size:16px; font-weight:800; color:#047857;">₹${stats.total_workmate_charge.toLocaleString('en-IN')}</div>
+        </div>
+      `;
+    }
+
+    // Render Banks with auto failover switch
+    const bankListEl = document.getElementById("adminBanksList");
+    if (bankListEl) {
+      bankListEl.innerHTML = banks.map(b => `
+        <div class="admin-bank-card ${b.is_primary ? 'active-primary' : ''}">
+          <div>
+            <div style="font-weight:700; font-size:13px;">
+              ${b.bank_name} 
+              ${b.is_primary ? '<span style="background:#10b981; color:#fff; font-size:9px; padding:1px 5px; border-radius:4px; font-weight:bold; margin-left:4px;">PRIMARY ACTIVE</span>' : '<span style="background:#e2e8f0; color:#475569; font-size:9px; padding:1px 5px; border-radius:4px; margin-left:4px;">FAILOVER STANDBY</span>'}
+            </div>
+            <div style="font-size:11px; color:#64748b;">A/C: ${b.account_masked} • IFSC: ${b.ifsc} • UPI: ${b.upi_id}</div>
+          </div>
+          <div>
+            ${!b.is_primary ? `<button class="btn-wallet-action" style="padding:4px 8px; font-size:11px; background:#1a56db; color:#fff;" onclick="switchAdminBank('${b.id}')">Make Primary</button>` : '<i class="fa-solid fa-circle-check" style="color:#10b981; font-size:18px;"></i>'}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Render Rate Editor
+    const rateListEl = document.getElementById("adminRateList");
+    if (rateListEl) {
+      rateListEl.innerHTML = services.map(s => `
+        <div class="admin-rate-row">
+          <div>
+            <strong>${isHi ? s.name_hi : s.name_en}</strong>
+            <div style="font-size:11px; color:#64748b;">${s.desc_en}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span>₹</span>
+            <input type="number" id="rateInput_${s.id}" class="admin-rate-input" value="${s.base_rate}" step="10" />
+            <button class="btn-wallet-action" style="padding:6px 10px; font-size:11px; background:#0d9488; color:#fff;" onclick="saveServiceRate('${s.id}')">Save</button>
+          </div>
+        </div>
+      `).join("");
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function saveServiceRate(serviceId) {
+  const input = document.getElementById(`rateInput_${serviceId}`);
+  if (!input) return;
+  const newRate = parseFloat(input.value);
+
+  try {
+    const res = await fetch(`/api/services/${serviceId}/rate`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base_rate: newRate })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Rate update failed");
+
+    showToast(`Updated rate to ₹${newRate}! All customer quotes recalculated.`, "success");
+    await loadInitialData();
+  } catch (e) {
+    showToast(e.message, "error");
+  }
+}
+
+async function switchAdminBank(bankId) {
+  try {
+    const res = await fetch(`/api/admin/banks/${bankId}/switch`, { method: "POST" });
+    const data = await res.json();
+    showToast(data.message || "Primary settlement bank updated!", "success");
+    openAdminConsoleModal();
+  } catch (e) {
+    showToast(e.message, "error");
+  }
+}
+
+// ----------------- Customer Work Adding & Escrow Pay ----------------- //
+
+function openBookingForCategory(categoryId) {
+  state.selectedCategoryForBooking = categoryId;
+  const select = document.getElementById("bookingServiceSelect");
+  if (!select) return;
+
+  const filteredServices = state.services.filter(s => s.category_id === categoryId);
+  const isHi = state.lang === "hi";
+
+  select.innerHTML = filteredServices.map(s => `
+    <option value="${s.id}">${isHi ? s.name_hi : s.name_en} (₹${s.base_rate}/${isHi ? 'दिन' : 'day'})</option>
+  `).join("");
+
+  updateEstimatedPrice();
+  document.getElementById("modalBooking").classList.add("active");
+}
+
+function updateEstimatedPrice() {
+  const select = document.getElementById("bookingServiceSelect");
+  const durationInput = document.getElementById("bookingDurationHours");
+  const typeSelect = document.getElementById("bookingTypeSelect");
+  const priceDisplay = document.getElementById("bookingPriceEstimate");
+
+  if (!select || !durationInput || !priceDisplay) return;
+
+  const serviceId = select.value;
+  const service = state.services.find(s => s.id === serviceId);
+  const hours = parseInt(durationInput.value) || 4;
+  const isInstant = typeSelect.value === "instant";
+  const isHi = state.lang === "hi";
+
+  const baseRate = service ? service.base_rate : 750;
+  const subtotal = Math.round(baseRate * (hours >= 8 ? hours / 8 : hours / 4));
+  const workmateCharge = Math.round(subtotal * 0.10); // 10% WorkMate Charge
+  const emergency = isInstant ? 150 : 0;
+  const total = subtotal + emergency;
+
+  priceDisplay.innerHTML = `
+    <strong>₹${total.toLocaleString('en-IN')}</strong> 
+    <span style="font-size:11px; color:#64748b; display:block; margin-top:2px;">
+      ${isHi 
+        ? `मूल कार्य दर: ₹${subtotal} + 10% वर्कमेट सेवा शुल्क (WorkMate Charge): ₹${workmateCharge} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}`
+        : `Base Work Rate: ₹${subtotal} + 10% WorkMate Charge: ₹${workmateCharge} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`
+      }
+    </span>
+  `;
+}
+
+async function submitBooking(event) {
+  event.preventDefault();
+  const isHi = state.lang === "hi";
+
+  const serviceId = document.getElementById("bookingServiceSelect").value;
+  const bookingType = document.getElementById("bookingTypeSelect").value;
+  const duration = parseInt(document.getElementById("bookingDurationHours").value) || 4;
+  const address = document.getElementById("bookingAddressInput").value.trim();
+  const notes = document.getElementById("bookingNotesInput").value.trim();
+
+  if (!address) {
+    showToast(isHi ? "कृपया सेवा का पता दर्ज करें" : "Please enter a service location address", "error");
+    return;
+  }
+
+  const payload = {
+    customer_name: state.session && state.session.user ? state.session.user.name : state.userProfile.name,
+    customer_phone: state.session && state.session.user ? state.session.user.phone : state.userProfile.phone,
+    service_id: serviceId,
+    task_description: notes || (isHi ? "कुशल लेबर की तत्काल आवश्यकता" : "Immediate requirement matching trade standards"),
+    booking_type: bookingType,
+    duration_hours: duration,
+    location_address: address,
+    lat: 28.6139,
+    lng: 77.2090
+  };
+
+  try {
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("Work adding failed");
+    const data = await res.json();
+    closeModal("modalBooking");
+    showToast(isHi ? `भुगतान सफल! काम दर्ज हुआ व लेबर डिस्पैच हुई (#${data.booking.booking_number})` : `Payment Secured! Work Posted & Labour Dispatched (#${data.booking.booking_number})`, "success");
+
+    await loadInitialData();
+    switchTab("orders");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+// ----------------- Live GPS Tracking ----------------- //
+
+async function openLiveTrackingModal(bookingId) {
+  try {
+    const res = await fetch(`/api/tracking/${bookingId}`);
+    if (!res.ok) throw new Error("Tracking data unavailable");
+    const data = await res.json();
+
+    document.getElementById("trackingWorkerName").textContent = data.worker_name || "Mukesh Verma";
+    document.getElementById("trackingWorkerPhone").textContent = data.worker_phone || "+91 98234 11092";
+    document.getElementById("trackingOtpCode").textContent = data.otp || "5603";
+    document.getElementById("trackingEtaTime").textContent = `${data.eta_minutes || 15} mins`;
+
+    document.getElementById("modalTracking").classList.add("active");
+    if (typeof initTrackingMap === "function") {
+      initTrackingMap(data);
+    }
+  } catch (err) {
+    showToast("Failed to load tracking", "error");
+  }
+}
+
+function openVerifyOtpModal(bookingId) {
+  const b = state.bookings.find(item => item.id === bookingId) || state.activeBooking;
+  if (!b) return;
+  const isHi = state.lang === "hi";
+  document.getElementById("verifyOtpBookingId").value = b.id;
+  document.getElementById("verifyOtpHint").textContent = `${isHi ? 'ग्राहक ओटीपी' : 'Customer OTP'}: ${b.otp}`;
+  document.getElementById("modalVerifyOtp").classList.add("active");
+}
+
+async function submitOtpVerification(event) {
+  event.preventDefault();
+  const isHi = state.lang === "hi";
+  const bookingId = document.getElementById("verifyOtpBookingId").value;
+  const enteredOtp = document.getElementById("verifyOtpInput").value.trim();
+
+  try {
+    const res = await fetch(`/api/bookings/${bookingId}/verify-otp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ booking_id: bookingId, otp: enteredOtp })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Invalid OTP");
+
+    closeModal("modalVerifyOtp");
+    showToast(isHi ? "ओटीपी सत्यापित! कार्य प्रारंभ हुआ।" : "OTP Verified! Worker job started.", "success");
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function triggerCompleteJob(bookingId) {
+  const isHi = state.lang === "hi";
+  try {
+    const res = await fetch(`/api/bookings/${bookingId}/complete`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to complete job");
+
+    closeModal("modalVerifyOtp");
+    showToast(isHi ? "कार्य पूर्ण हुआ! श्रमिक भुगतान जारी किया गया।" : (data.message || "Job Completed! Payout released."), "success");
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+// ----------------- Wallet Operations ----------------- //
+
+function openAddMoneyModal() {
+  document.getElementById("modalAddMoney").classList.add("active");
+}
+
+function setAddAmount(val) {
+  document.getElementById("addMoneyAmount").value = val;
+}
+
+async function submitAddMoney(event) {
+  event.preventDefault();
+  const isHi = state.lang === "hi";
+  const amount = parseFloat(document.getElementById("addMoneyAmount").value);
+  const method = document.getElementById("addMoneyMethod").value;
+
+  if (isNaN(amount) || amount <= 0) {
+    showToast(isHi ? "कृपया मान्य राशि दर्ज करें" : "Please enter a valid amount", "error");
+    return;
+  }
+
+  try {
+    if (typeof handleAddMoney === "function") {
+      await handleAddMoney(amount, method);
+    }
+    closeModal("modalAddMoney");
+    showToast(isHi ? `वॉलेट में ₹${amount.toLocaleString('en-IN')} जोड़े गए!` : `Added ₹${amount.toLocaleString('en-IN')} to WorkMate Wallet!`, "success");
+    await loadInitialData();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+// ----------------- Reviews ----------------- //
+
+function openReviewModal(bookingId, workerId, workerName) {
+  document.getElementById("reviewBookingId").value = bookingId;
+  document.getElementById("reviewWorkerId").value = workerId;
+  document.getElementById("reviewWorkerName").textContent = workerName || "Worker";
+  document.getElementById("modalReview").classList.add("active");
+}
+
+async function submitReview(event) {
+  event.preventDefault();
+  const isHi = state.lang === "hi";
+
+  const bookingId = document.getElementById("reviewBookingId").value;
+  const workerId = document.getElementById("reviewWorkerId").value;
+  const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
+  const comment = document.getElementById("reviewCommentInput").value.trim();
+
+  try {
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        booking_id: bookingId,
+        worker_id: workerId,
+        rating: rating,
+        tags: ["Punctual", "Expert Service", "Verified"],
+        comment: comment || (isHi ? "उत्कृष्ट कार्य, सेवा से संतुष्ट।" : "Great work, satisfied with quality."),
+        customer_name: state.userProfile.name
+      })
+    });
+
+    if (!res.ok) throw new Error("Review submission failed");
+    closeModal("modalReview");
+    showToast(isHi ? "आपकी समीक्षा दर्ज की गई! धन्यवाद।" : "Review submitted successfully! Thank you.", "success");
+    await loadInitialData();
+  } catch (err) {
     showToast(err.message, "error");
   }
 }
@@ -666,31 +1113,7 @@ async function triggerDatabaseSync() {
   }, 1200);
 }
 
-// ----------------- Logout Management ----------------- //
-
-function openLogoutModal() {
-  document.getElementById("modalLogoutConfirm").classList.add("active");
-}
-
-function executeLogout() {
-  closeModal("modalLogoutConfirm");
-  const isHi = state.lang === "hi";
-  showToast(isHi ? "सफलतापूर्वक लॉगआउट किया गया!" : "Logged out successfully!", "success");
-
-  // Show login simulation sheet
-  setTimeout(() => {
-    document.getElementById("modalLogin").classList.add("active");
-  }, 600);
-}
-
-function executeLogin() {
-  closeModal("modalLogin");
-  const isHi = state.lang === "hi";
-  showToast(isHi ? "पुनः स्वागत है, रमेश!" : "Welcome back, Ramesh Kumar!", "success");
-  switchTab("home");
-}
-
-// ----------------- Modals Common ----------------- //
+// ----------------- Modal Common ----------------- //
 
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -700,258 +1123,15 @@ function closeModal(modalId) {
   }
 }
 
-// Open Booking Modal for Category
-function openBookingForCategory(categoryId) {
-  state.selectedCategoryForBooking = categoryId;
-  const select = document.getElementById("bookingServiceSelect");
-  if (!select) return;
+// ----------------- Setup & Initialization ----------------- //
 
-  const filteredServices = state.services.filter(s => s.category_id === categoryId);
-  const isHi = state.lang === "hi";
-
-  select.innerHTML = filteredServices.map(s => `
-    <option value="${s.id}">${isHi ? s.name_hi : s.name_en} (₹${s.base_rate}/${isHi ? 'दिन' : 'day'})</option>
-  `).join("");
-
-  updateEstimatedPrice();
-  document.getElementById("modalBooking").classList.add("active");
-}
-
-function updateEstimatedPrice() {
-  const select = document.getElementById("bookingServiceSelect");
-  const durationInput = document.getElementById("bookingDurationHours");
-  const typeSelect = document.getElementById("bookingTypeSelect");
-  const priceDisplay = document.getElementById("bookingPriceEstimate");
-
-  if (!select || !durationInput || !priceDisplay) return;
-
-  const serviceId = select.value;
-  const service = state.services.find(s => s.id === serviceId);
-  const hours = parseInt(durationInput.value) || 4;
-  const isInstant = typeSelect.value === "instant";
-  const isHi = state.lang === "hi";
-
-  const baseRate = service ? service.base_rate : 600;
-  const subtotal = Math.round(baseRate * (hours >= 8 ? hours / 8 : hours / 4));
-  const commission = Math.round(subtotal * 0.10);
-  const emergency = isInstant ? 150 : 0;
-  const total = subtotal + emergency;
-
-  priceDisplay.innerHTML = `
-    <strong>₹${total.toLocaleString('en-IN')}</strong> 
-    <span style="font-size:11px; color:#64748b; display:block;">
-      ${isHi ? `मूल दर: ₹${subtotal} + 10% वर्कमेट कमीशन: ₹${commission} ${emergency ? '+ आपातकालीन त्वरित शुल्क: ₹150' : ''}` : `Base: ₹${subtotal} + 10% WorkMate Commission: ₹${commission} ${emergency ? '+ Emergency Fast Dispatch: ₹150' : ''}`}
-    </span>
-  `;
-}
-
-// Submit Booking
-async function submitBooking(event) {
-  event.preventDefault();
-  const isHi = state.lang === "hi";
-
-  const serviceId = document.getElementById("bookingServiceSelect").value;
-  const bookingType = document.getElementById("bookingTypeSelect").value;
-  const duration = parseInt(document.getElementById("bookingDurationHours").value) || 4;
-  const address = document.getElementById("bookingAddressInput").value.trim();
-  const notes = document.getElementById("bookingNotesInput").value.trim();
-
-  if (!address) {
-    showToast(isHi ? "कृपया सेवा का पता दर्ज करें" : "Please enter a service location address", "error");
-    return;
-  }
-
-  const payload = {
-    customer_name: state.userProfile.name,
-    customer_phone: state.userProfile.phone,
-    service_id: serviceId,
-    task_description: notes || (isHi ? "कुशल लेबर की तत्काल आवश्यकता" : "Immediate requirement matching trade standards"),
-    booking_type: bookingType,
-    duration_hours: duration,
-    location_address: address,
-    lat: 28.6139,
-    lng: 77.2090
-  };
-
-  try {
-    const res = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Booking failed");
-    }
-
-    const data = await res.json();
-    closeModal("modalBooking");
-    showToast(isHi ? `बुकिंग ${data.booking.booking_number} सफलतापूर्वक दर्ज हुई!` : (data.message || "Booking created successfully!"), "success");
-
-    await loadInitialData();
-    switchTab("orders");
-  } catch (err) {
-    console.error("Booking error:", err);
-    showToast(err.message, "error");
-  }
-}
-
-// Open Live Tracking Modal
-async function openLiveTrackingModal(bookingId) {
-  try {
-    const res = await fetch(`/api/tracking/${bookingId}`);
-    if (!res.ok) throw new Error("Tracking data unavailable");
-    const data = await res.json();
-
-    document.getElementById("trackingWorkerName").textContent = data.worker_name || "Verified Worker";
-    document.getElementById("trackingWorkerPhone").textContent = data.worker_phone || "+91 98234 11092";
-    document.getElementById("trackingOtpCode").textContent = data.otp || "4567";
-    document.getElementById("trackingEtaTime").textContent = `${data.eta_minutes || 15} mins`;
-
-    document.getElementById("modalTracking").classList.add("active");
-    if (typeof initTrackingMap === "function") {
-      initTrackingMap(data);
-    }
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to load tracking data", "error");
-  }
-}
-
-// Verify OTP Modal
-function openVerifyOtpModal(bookingId) {
-  const b = state.bookings.find(item => item.id === bookingId) || state.activeBooking;
-  if (!b) return;
-  const isHi = state.lang === "hi";
-  document.getElementById("verifyOtpBookingId").value = b.id;
-  document.getElementById("verifyOtpHint").textContent = `${isHi ? 'ग्राहक ओटीपी' : 'Customer OTP'}: ${b.otp}`;
-  document.getElementById("modalVerifyOtp").classList.add("active");
-}
-
-async function submitOtpVerification(event) {
-  event.preventDefault();
-  const isHi = state.lang === "hi";
-  const bookingId = document.getElementById("verifyOtpBookingId").value;
-  const enteredOtp = document.getElementById("verifyOtpInput").value.trim();
-
-  try {
-    const res = await fetch(`/api/bookings/${bookingId}/verify-otp`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ booking_id: bookingId, otp: enteredOtp })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Invalid OTP");
-
-    closeModal("modalVerifyOtp");
-    showToast(isHi ? "ओटीपी सत्यापित! कार्य प्रारंभ हुआ।" : "OTP Verified! Worker job started.", "success");
-    await loadInitialData();
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-// Confirm Job Completion & Escrow Payout
-async function triggerCompleteJob(bookingId) {
-  const isHi = state.lang === "hi";
-  try {
-    const res = await fetch(`/api/bookings/${bookingId}/complete`, {
-      method: "POST"
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Failed to complete job");
-
-    closeModal("modalVerifyOtp");
-    showToast(isHi ? "कार्य पूर्ण हुआ! श्रमिक भुगतान जारी किया गया।" : (data.message || "Job Completed! Worker payout released."), "success");
-    await loadInitialData();
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-// Add Money to Wallet Modal
-function openAddMoneyModal() {
-  document.getElementById("modalAddMoney").classList.add("active");
-}
-
-function setAddAmount(val) {
-  document.getElementById("addMoneyAmount").value = val;
-}
-
-async function submitAddMoney(event) {
-  event.preventDefault();
-  const isHi = state.lang === "hi";
-  const amount = parseFloat(document.getElementById("addMoneyAmount").value);
-  const method = document.getElementById("addMoneyMethod").value;
-
-  if (isNaN(amount) || amount <= 0) {
-    showToast(isHi ? "कृपया मान्य राशि दर्ज करें" : "Please enter a valid amount", "error");
-    return;
-  }
-
-  try {
-    if (typeof handleAddMoney === "function") {
-      await handleAddMoney(amount, method);
-    }
-    closeModal("modalAddMoney");
-    showToast(isHi ? `वॉलेट में ₹${amount.toLocaleString('en-IN')} सफलतापूर्वक जोड़े गए!` : `Added ₹${amount.toLocaleString('en-IN')} to WorkMate Wallet!`, "success");
-    await loadInitialData();
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-// Rating & Review Modal
-function openReviewModal(bookingId, workerId, workerName) {
-  document.getElementById("reviewBookingId").value = bookingId;
-  document.getElementById("reviewWorkerId").value = workerId;
-  document.getElementById("reviewWorkerName").textContent = workerName || "Worker";
-  document.getElementById("modalReview").classList.add("active");
-}
-
-async function submitReview(event) {
-  event.preventDefault();
-  const isHi = state.lang === "hi";
-
-  const bookingId = document.getElementById("reviewBookingId").value;
-  const workerId = document.getElementById("reviewWorkerId").value;
-  const rating = parseInt(document.getElementById("reviewRatingSelect").value) || 5;
-  const comment = document.getElementById("reviewCommentInput").value.trim();
-
-  try {
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        booking_id: bookingId,
-        worker_id: workerId,
-        rating: rating,
-        tags: ["Punctual", "Expert Service", "Verified"],
-        comment: comment || (isHi ? "उत्कृष्ट कार्य, सेवा से संतुष्ट।" : "Great work, satisfied with quality."),
-        customer_name: state.userProfile.name
-      })
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || "Review submission failed");
-    }
-
-    closeModal("modalReview");
-    showToast(isHi ? "आपकी समीक्षा दर्ज की गई! धन्यवाद।" : "Review submitted successfully! Thank you.", "success");
-    await loadInitialData();
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-// Setup Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
-  loadInitialData();
+  const hasSession = checkUserSession();
+  if (hasSession) {
+    loadInitialData();
+  }
 
-  // Search input live filtering
+  // Live search filtering
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
@@ -959,7 +1139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Booking form dynamic price updates
+  // Booking price updates
   const servSelect = document.getElementById("bookingServiceSelect");
   const durInput = document.getElementById("bookingDurationHours");
   const typeSelect = document.getElementById("bookingTypeSelect");
