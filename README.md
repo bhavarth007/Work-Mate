@@ -96,14 +96,14 @@ Double-click `start_workmate.bat` in File Explorer, or run in terminal:
 ```powershell
 .\start_workmate.bat
 ```
-This will start the backend server on `http://127.0.0.1:8000` and automatically open your default browser.
+This will start the backend server on `http://localhost:8069` and automatically open your default browser.
 
 ### Option 2: Running the Python Backend Manually
 ```powershell
-python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn backend.app:app --host 127.0.0.1 --port 8069 --reload
 ```
-- Interactive Web & Mobile App: Open [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- Swagger / OpenAPI Docs: Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- Interactive Web & Mobile App: Open [http://localhost:8069](http://localhost:8069)
+- Swagger / OpenAPI Docs: Open [http://localhost:8069/docs](http://localhost:8069/docs)
 
 ### Option 3: Running Automated Tests
 ```powershell

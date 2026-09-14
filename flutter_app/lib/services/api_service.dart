@@ -6,7 +6,7 @@ import '../models/booking_model.dart';
 import '../models/wallet_model.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'http://127.0.0.1:8069/api';
 
   static Future<List<CategoryModel>> getCategories() async {
     try {
