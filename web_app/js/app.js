@@ -499,10 +499,27 @@ function togglePasswordVisibility(inputId, iconId) {
 
 async function handleCustomerLogin(event) {
   if (event) event.preventDefault();
-  const phone = (document.getElementById("loginPhoneInput").value || "").trim();
+  const isHi = state.lang === "hi";
+  const identInput = document.getElementById("loginIdentifierInput") || document.getElementById("loginPhoneInput");
+  const passInput = document.getElementById("loginPasswordInput");
 
-  if (!phone) {
-    showToast(state.lang === "hi" ? "कृपया मोबाइल नंबर दर्ज करें।" : "Please enter your mobile number.", "error");
+  const identifier = (identInput ? identInput.value : "").trim();
+  const password = (passInput ? passInput.value : "").trim();
+
+  if (!identifier) {
+    showToast(isHi ? "कृपया मोबाइल नंबर अथवा व्यवस्थापक आईडी दर्ज करें।" : "Please enter your mobile number or Admin ID.", "error");
+    return;
+  }
+
+  const cleanDigits = identifier.replace(/[^0-9]/g, "");
+  const isPhone = /^[0-9]+$/.test(identifier) || (cleanDigits.length >= 8);
+  if (isPhone && cleanDigits.length !== 10) {
+    showToast(isHi ? "मोबाइल नंबर ठीक 10 अंकों का होना चाहिए।" : "Mobile number must be exactly 10 digits.", "error");
+    return;
+  }
+
+  if (!password) {
+    showToast(isHi ? "कृपया पासवर्ड दर्ज करें।" : "Please enter your password.", "error");
     return;
   }
 
@@ -510,32 +527,40 @@ async function handleCustomerLogin(event) {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "customer", identifier: phone })
+      body: JSON.stringify({ identifier: identifier, password: password })
     });
 
     const data = await res.json();
     if (!res.ok) {
       if (res.status === 404) {
         showToast(
-          state.lang === "hi"
-            ? "इस मोबाइल नंबर से खाता नहीं मिला। कृपया पहले नया खाता बनाएं।"
+          isHi
+            ? "इस नंबर से कोई खाता नहीं मिला। कृपया पहले अपना नया खाता बनाएं।"
             : "Account not found with this mobile number. Please register first to create an account.",
-          "error"
+          "info"
         );
         switchAuthTab("register");
-        const cleanDigits = phone.replace(/[^0-9]/g, "").slice(-10);
         const regPhone = document.getElementById("registerPhoneInput");
-        if (regPhone) regPhone.value = cleanDigits;
+        if (regPhone) regPhone.value = cleanDigits.slice(-10);
         return;
       }
-      throw new Error(data.detail || "Login failed");
+      throw new Error(data.detail || (isHi ? "गलत पासवर्ड अथवा क्रेडेंशियल।" : "Invalid password or credentials."));
     }
 
     localStorage.setItem("workmate_session", JSON.stringify(data));
-    showToast(state.lang === "hi" ? "सफलतापूर्वक लॉगिन हुआ! स्वागत है।" : "Logged in successfully! Welcome.", "success");
+    const isAdmin = data.role === "admin";
+    showToast(
+      isAdmin
+        ? (isHi ? "व्यवस्थापक लॉगिन सफल! व्यवस्थापक कंसोल में आपका स्वागत है।" : "Admin login successful! Welcome to Admin Console.")
+        : (isHi ? "सफलतापूर्वक लॉगिन हुआ! स्वागत है।" : "Logged in successfully! Welcome to WorkMate."),
+      "success"
+    );
 
     checkUserSession();
     await loadInitialData();
+    if (isAdmin) {
+      switchTab("admin");
+    }
   } catch (err) {
     showToast(err.message, "error");
   }
@@ -543,15 +568,34 @@ async function handleCustomerLogin(event) {
 
 async function handleCustomerRegister(event) {
   if (event) event.preventDefault();
+  const isHi = state.lang === "hi";
   const name = (document.getElementById("registerNameInput").value || "").trim();
   const phone = (document.getElementById("registerPhoneInput").value || "").trim();
+  const passInput = document.getElementById("registerPasswordInput");
+  const password = (passInput ? passInput.value : "").trim();
   const address = (document.getElementById("registerAddressInput").value || "").trim();
   const city = (document.getElementById("registerCityInput").value || "").trim();
   const emailInput = document.getElementById("registerEmailInput");
   const email = emailInput ? emailInput.value.trim() : "";
 
-  if (!name || !phone) {
-    showToast(state.lang === "hi" ? "कृपया नाम और मोबाइल नंबर दर्ज करें।" : "Please enter your name and mobile number.", "error");
+  if (!name) {
+    showToast(isHi ? "कृपया अपना पूरा नाम दर्ज करें।" : "Please enter your full name.", "error");
+    return;
+  }
+
+  const cleanDigits = phone.replace(/[^0-9]/g, "");
+  if (cleanDigits.length !== 10) {
+    showToast(isHi ? "मोबाइल नंबर ठीक 10 अंकों का होना चाहिए।" : "Mobile number must be exactly 10 digits.", "error");
+    return;
+  }
+
+  if (!password || password.length < 6) {
+    showToast(isHi ? "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।" : "Password must be at least 6 characters.", "error");
+    return;
+  }
+
+  if (!address || !city) {
+    showToast(isHi ? "कृपया अपना पता एवं शहर दर्ज करें।" : "Please enter your address and city.", "error");
     return;
   }
 
@@ -559,43 +603,17 @@ async function handleCustomerRegister(event) {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, address, city, email })
+      body: JSON.stringify({ name, phone: cleanDigits, password, address, city, email })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Registration failed");
+    if (!res.ok) throw new Error(data.detail || (isHi ? "पंजीकरण विफल रहा।" : "Registration failed"));
 
     localStorage.setItem("workmate_session", JSON.stringify(data));
-    showToast(state.lang === "hi" ? "खाता सफलतापूर्वक बन गया है! स्वागत है।" : "Account registered successfully! Welcome to WorkMate.", "success");
+    showToast(isHi ? "खाता सफलतापूर्वक बन गया है! स्वागत है।" : "Account registered successfully! Welcome to WorkMate.", "success");
 
     checkUserSession();
     await loadInitialData();
-  } catch (err) {
-    showToast(err.message, "error");
-  }
-}
-
-async function handleAdminLogin(event) {
-  if (event) event.preventDefault();
-  const adminId = document.getElementById("adminIdInput").value.trim();
-  const password = document.getElementById("adminPasswordInput").value;
-
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: "admin", identifier: adminId, password: password })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Invalid Admin Credentials");
-
-    localStorage.setItem("workmate_session", JSON.stringify(data));
-    showToast("Admin Console Authenticated! Full Management Access Granted.", "success");
-
-    checkUserSession();
-    await loadInitialData();
-    switchTab("admin");
   } catch (err) {
     showToast(err.message, "error");
   }
