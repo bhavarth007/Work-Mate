@@ -746,6 +746,12 @@ function switchTab(tabId) {
   if (targetScreen) targetScreen.classList.add("active");
   if (targetNav) targetNav.classList.add("active");
 
+  // Show Quick Book button strictly on home screen
+  const fab = document.querySelector(".fab-quick-book");
+  if (fab) {
+    fab.style.display = (tabId === "home") ? "flex" : "none";
+  }
+
   if (tabId === "admin") {
     renderAdminModulesRates();
     renderAdminBanksDashboard();
@@ -1746,35 +1752,50 @@ async function saveRateFromBookingModal() {
 async function renderAdminBanksDashboard() {
   const container = document.getElementById("adminBankCardsList");
   if (!container) return;
+  const isHi = state.lang === "hi";
 
   try {
     const res = await fetch("/api/admin/banks");
     const banks = await res.json();
     state.adminBanks = banks;
 
-    container.innerHTML = banks.map(b => `
-      <div class="admin-bank-card ${b.is_primary ? 'active-primary' : ''}">
-        <div style="flex:1;">
-          <div style="font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span>${b.bank_name}</span>
-            ${b.is_primary 
-              ? `<span style="background:#10b981; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:800;">PRIMARY ACTIVE</span>` 
-              : `<span style="background:#e2e8f0; color:#475569; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600;">STANDBY BACKUP</span>`}
+    container.innerHTML = banks.map(b => {
+      const acct = b.account_masked || b.account_number_masked || '•••• 9921';
+      const ifsc = b.ifsc || b.ifsc_code || 'HDFC0000240';
+      const vol = (b.total_routed_inr || b.balance_held || 184500).toLocaleString('en-IN');
+      const isPrimary = !!b.is_primary;
+
+      return `
+        <div class="admin-bank-card ${isPrimary ? 'active-primary' : ''}">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-weight:800; font-size:14px; color:#0f172a;">${b.bank_name}</span>
+              ${isPrimary 
+                ? `<span class="bank-status-pill primary-pill">${isHi ? 'सक्रिय मुख्य' : 'PRIMARY ACTIVE'}</span>` 
+                : `<span class="bank-status-pill standby-pill">${isHi ? 'बैकअप स्टैंडबाय' : 'STANDBY BACKUP'}</span>`}
+            </div>
+            <div style="font-size:12px; color:#475569; margin-top:4px;">
+              <span>A/C: <strong style="color:#1e293b;">${acct}</strong></span>
+              <span style="margin:0 6px; color:#cbd5e1;">•</span>
+              <span>IFSC: <strong style="color:#1e293b;">${ifsc}</strong></span>
+              <span style="margin:0 6px; color:#cbd5e1;">•</span>
+              <span>UPI: <code style="background:#f1f5f9; padding:1px 6px; border-radius:4px; font-size:11px; color:#1e40af;">${b.upi_id || 'workmate.escrow@bank'}</code></span>
+            </div>
+            <div style="font-size:11px; color:#1e40af; font-weight:600; margin-top:5px; display:flex; align-items:center; gap:6px;">
+              <i class="fa-solid fa-arrows-split-up-and-left" style="color:#2563eb;"></i>
+              <span>${isHi ? 'रूटेड वॉल्यूम:' : 'Routed Volume:'} ₹${vol}</span>
+              <span style="color:#cbd5e1;">•</span>
+              <span style="color:#059669;">${isHi ? 'फेलओवर ऑटो-रूटिंग: सक्रिय' : 'Failover Auto-Routing: Engaged'}</span>
+            </div>
           </div>
-          <div style="font-size:11px; color:#64748b; margin-top:2px;">
-            A/C: ${b.account_masked} • IFSC: ${b.ifsc} • UPI: <code>${b.upi_id}</code>
-          </div>
-          <div style="font-size:10px; color:#1e40af; margin-top:4px;">
-            Routed Volume: ₹${(b.total_routed_inr || 0).toLocaleString('en-IN')} • Failover Auto-Routing: Engaged
+          <div>
+            ${!isPrimary 
+              ? `<button type="button" class="btn-make-primary-bank" onclick="switchAdminBank('${b.id}')">${isHi ? 'मुख्य बनाएं' : 'Make Primary'}</button>` 
+              : `<span style="color:#10b981; font-weight:800; font-size:12px; display:flex; align-items:center; gap:5px;"><i class="fa-solid fa-circle-check"></i> ${isHi ? 'मुख्य गेटवे' : 'Primary Gateway'}</span>`}
           </div>
         </div>
-        <div>
-          ${!b.is_primary 
-            ? `<button class="btn-wallet-action" style="padding:6px 12px; font-size:11px; background:#1a56db; color:#fff;" onclick="switchAdminBank('${b.id}')">Make Primary</button>` 
-            : `<span style="color:#10b981; font-weight:700; font-size:12px; display:flex; align-items:center; gap:4px;"><i class="fa-solid fa-circle-check"></i> Primary Gateway</span>`}
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
   } catch (e) {
     console.error("Error loading admin banks:", e);
   }
@@ -2448,33 +2469,34 @@ async function renderAdminUsers() {
       const maskedPass = u.password ? (u.password.length > 2 ? u.password.slice(0, 1) + "••••" + u.password.slice(-1) : "••••••") : "••••••";
 
       return `
-        <div class="admin-user-card" id="admin-user-row-${u.id}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <img src="${u.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid ${isAdm ? '#1e40af' : '#10b981'};" alt="${u.name}" />
-            <div>
-              <div style="font-weight:800; font-size:13px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+        <div class="admin-user-card" id="admin-user-row-${u.id}">
+          <div style="display:flex; align-items:center; gap:12px; flex:1; min-width:240px;">
+            <img src="${u.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${isAdm ? '#2563eb' : '#10b981'}; box-shadow:0 1px 3px rgba(0,0,0,0.1);" alt="${u.name}" />
+            <div style="flex:1;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:8px;">
                 <span>${u.name}</span>
-                <span style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; background:${isAdm ? '#dbeafe' : '#dcfce7'}; color:${isAdm ? '#1e40af' : '#15803d'};">
+                <span class="user-role-badge ${isAdm ? 'role-admin' : 'role-customer'}">
                   ${isAdm ? (isHi ? 'व्यवस्थापक' : 'ADMIN') : (isHi ? 'ग्राहक' : 'CUSTOMER')}
                 </span>
               </div>
-              <div style="font-size:12px; color:#475569; margin-top:2px;">
-                <i class="fa-solid fa-phone" style="font-size:10px; color:#64748b;"></i> ${u.phone}
-                <span style="margin:0 4px; color:#cbd5e1;">•</span>
-                <i class="fa-solid fa-key" style="font-size:10px; color:#d97706;"></i> <code>${maskedPass}</code>
+              <div style="font-size:12px; color:#475569; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span><i class="fa-solid fa-phone" style="font-size:11px; color:#2563eb;"></i> ${u.phone}</span>
+                <span style="color:#cbd5e1;">•</span>
+                <span><i class="fa-solid fa-lock" style="font-size:11px; color:#d97706;"></i> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:11px; color:#334155;">${maskedPass}</code></span>
               </div>
-              <div style="font-size:11px; color:#64748b; margin-top:2px;">
-                ${u.address || u.city ? `${u.address || ''}, ${u.city || ''}` : (isHi ? 'कोई पता दर्ज नहीं' : 'No address set')}
+              <div style="font-size:11px; color:#64748b; margin-top:3px; display:flex; align-items:center; gap:4px;">
+                <i class="fa-solid fa-location-dot" style="font-size:10px; color:#94a3b8;"></i>
+                <span>${u.address || u.city ? `${u.address || ''}${u.address && u.city ? ', ' : ''}${u.city || ''}` : (isHi ? 'कोई पता दर्ज नहीं' : 'No address set')}</span>
               </div>
             </div>
           </div>
 
-          <div style="display:flex; align-items:center; gap:6px;">
-            <button type="button" class="btn-edit-user-trigger" onclick="openAdminUserModal('${u.id}')" title="${isHi ? 'विवरण संपादित करें' : 'Edit User'}" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:12px; color:#1e40af; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="btn-edit-user-trigger" onclick="openAdminUserModal('${u.id}')" title="${isHi ? 'विवरण संपादित करें' : 'Edit User'}">
               <i class="fa-solid fa-pen-to-square"></i> <span>${isHi ? 'संपादित करें' : 'Edit'}</span>
             </button>
             ${!isAdm && u.id !== 'admin-1' ? `
-              <button type="button" class="btn-delete-user-trigger" onclick="adminDeleteUser('${u.id}')" title="${isHi ? 'खाता हटाएं' : 'Delete User'}" style="background:#fee2e2; border:1px solid #fca5a5; border-radius:6px; padding:6px 10px; font-size:12px; color:#b91c1c; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+              <button type="button" class="btn-delete-user-trigger" onclick="adminDeleteUser('${u.id}')" title="${isHi ? 'खाता हटाएं' : 'Delete User'}">
                 <i class="fa-solid fa-trash"></i>
               </button>
             ` : ''}

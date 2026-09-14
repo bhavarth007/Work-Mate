@@ -114,9 +114,9 @@
       { id: "rev-1", booking_id: "b-prev-1", worker_id: "w-101", worker_name: "Mukesh Verma", customer_name: "Vikram Shah", rating: 5, tags: ["Punctual", "Skillful"], comment: "Mukesh arrived on time and finished the brickwork flawlessly.", date_str: "Yesterday" }
     ],
     adminBanks: [
-      { id: "bank-hdfc-1", bank_name: "HDFC Bank Corporate", account_name: "WorkMate Escrow & Clearing Pvt Ltd", account_number_masked: "•••• •••• 9921", ifsc_code: "HDFC0000240", branch: "Surat Central", upi_id: "workmate.escrow@hdfcbank", is_primary: true, failover_status: "Active Primary", balance_held: 245000.0 },
-      { id: "bank-icici-2", bank_name: "ICICI Bank Business", account_name: "WorkMate Clearing & Settlement", account_number_masked: "•••• •••• 4410", ifsc_code: "ICIC0001092", branch: "Ring Road", upi_id: "workmate.ops@icici", is_primary: false, failover_status: "Standby Failover Ready", balance_held: 120000.0 },
-      { id: "bank-axis-3", bank_name: "Axis Bank Corporate Reserve", account_name: "WorkMate Reserve & Payouts", account_number_masked: "•••• •••• 8104", ifsc_code: "UTIB0000451", branch: "Varachha", upi_id: "workmate.reserve@axisbank", is_primary: false, failover_status: "Standby Reserve", balance_held: 85000.0 }
+      { id: "bank-hdfc-1", bank_name: "HDFC Bank Corporate", account_name: "WorkMate Escrow & Clearing Pvt Ltd", account_masked: "•••• 9921", account_number_masked: "•••• 9921", ifsc: "HDFC0000240", ifsc_code: "HDFC0000240", branch: "Surat Central", upi_id: "workmate.escrow@hdfcbank", is_primary: true, total_routed_inr: 245000.0, status: "ACTIVE" },
+      { id: "bank-icici-2", bank_name: "ICICI Bank Business", account_name: "WorkMate Clearing & Settlement", account_masked: "•••• 4410", account_number_masked: "•••• 4410", ifsc: "ICIC0001092", ifsc_code: "ICIC0001092", branch: "Ring Road", upi_id: "workmate.ops@icici", is_primary: false, total_routed_inr: 120000.0, status: "STANDBY" },
+      { id: "bank-axis-3", bank_name: "Axis Bank Corporate Reserve", account_name: "WorkMate Reserve & Payouts", account_masked: "•••• 8104", account_number_masked: "•••• 8104", ifsc: "UTIB0000451", ifsc_code: "UTIB0000451", branch: "Varachha", upi_id: "workmate.reserve@axisbank", is_primary: false, total_routed_inr: 85000.0, status: "STANDBY" }
     ],
     config: { platform_charge_percent: 10.0 }
   };
@@ -141,6 +141,7 @@
             if (!u.role) u.role = (u.id === 'admin-1' || u.phone === '7878193644') ? 'admin' : 'customer';
           });
         }
+        parsed.adminBanks = DEFAULT_DB.adminBanks;
         localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
         return parsed;
       }

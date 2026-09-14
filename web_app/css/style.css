@@ -248,19 +248,64 @@ body {
 }
 
 .admin-bank-card {
-  background: #f8fafc;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.admin-bank-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
 }
 
 .admin-bank-card.active-primary {
-  background: #ecfdf5;
-  border-color: #10b981;
+  background: #f0fdf4;
+  border: 1.5px solid #10b981;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+}
+
+.bank-status-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.bank-status-pill.primary-pill {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.bank-status-pill.standby-pill {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-make-primary-bank {
+  background: #1a56db;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-make-primary-bank:hover {
+  background: #1e40af;
+  transform: translateY(-1px);
 }
 
 .admin-rate-row {
@@ -2101,25 +2146,100 @@ body {
 }
 
 .admin-user-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.2s ease;
 }
 
 .admin-user-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+.user-role-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.user-role-badge.role-admin {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.user-role-badge.role-customer {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.btn-add-admin-user {
+  background: #1a56db;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(26, 86, 219, 0.2);
+  transition: all 0.2s ease;
 }
 
 .btn-add-admin-user:hover {
-  background: #1d4ed8;
+  background: #1e40af;
   transform: translateY(-1px);
 }
 
+.btn-edit-user-trigger {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #1d4ed8;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
 .btn-edit-user-trigger:hover {
-  background: #e2e8f0;
-  color: #1e3a8a;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.btn-delete-user-trigger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
 }
 
 .btn-delete-user-trigger:hover {
-  background: #fecaca;
-  color: #991b1b;
+  background: #fee2e2;
+  border-color: #f87171;
 }
