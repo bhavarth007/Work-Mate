@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite databases (optional, keeping clean repo)
+*.db-journal
+
+# Environment variables & secrets
+.env
+firebase-adminsdk*.json
+serviceAccountKey*.json
+
+# Flutter / Dart
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/build/
+flutter_app/.packages
+.pub-cache/
+
+# OS Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp

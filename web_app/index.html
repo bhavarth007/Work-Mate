@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkMate (वर्कमेट) | On-Demand Blue-Collar Labour Platform</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div class="viewport-wrapper">
+    <!-- Top Developer & Viewport Controls -->
+    <div class="dev-controls-bar">
+      <div class="brand-badge">
+        <i class="fa-solid fa-users-gear"></i> WorkMate <span style="font-size:11px; opacity:0.8; font-weight:normal;">(वर्कमेट)</span>
+      </div>
+      <div class="controls-group">
+        <button id="btnViewMobile" class="btn-toggle-view active" onclick="toggleDeviceView('mobile')">
+          <i class="fa-solid fa-mobile-screen"></i> Mobile App
+        </button>
+        <button id="btnViewDesktop" class="btn-toggle-view" onclick="toggleDeviceView('desktop')">
+          <i class="fa-solid fa-desktop"></i> Web App
+        </button>
+        <button id="btnLangToggle" class="btn-lang-toggle" onclick="toggleLanguage()">
+          <i class="fa-solid fa-language"></i> हिंदी / English
+        </button>
+        <button class="btn-role-toggle" onclick="openWorkerOnboardModal()">
+          <i class="fa-solid fa-id-card"></i> <span data-i18n="menuWorkerOnboard">Worker KYC</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main App Container (Adaptive Device Shell) -->
+    <div id="appContainer" class="app-container">
+      <!-- Status bar (for phone frame) -->
+      <div class="phone-status-bar">
+        <span>9:41</span>
+        <div class="status-bar-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full"></i>
+        </div>
+      </div>
+
+      <!-- App Header -->
+      <header class="app-header">
+        <div class="header-location-box">
+          <div class="location-dropdown" onclick="showToast('Location fixed to registered address')">
+            <i class="fa-solid fa-location-dot"></i>
+            <span data-i18n="location">Flat 402, Sector 14, Noida</span>
+            <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+          </div>
+          <div class="user-greeting" data-i18n="greeting">नमस्ते, रमेश!</div>
+        </div>
+        <div class="header-user-avatar" onclick="switchTab('account')">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User Avatar">
+          <div class="online-dot"></div>
+        </div>
+      </header>
+
+      <!-- Content Views -->
+      <main class="app-content">
+
+        <!-- ================= Screen 1: Home View ================= -->
+        <section id="screen-home" class="screen-view active">
+          <!-- Search Bar (Page 1 Mockup) -->
+          <div class="search-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-icon-left"></i>
+            <input type="text" id="searchInput" class="search-input-box" placeholder="किसे ढूंढ रहे हैं? राजमिस्त्री..." />
+            <div class="search-mic-right" onclick="showToast('Voice Search listening: Speak your requirement...')">
+              <i class="fa-solid fa-microphone"></i>
+            </div>
+          </div>
+
+          <!-- 4 Core Service Categories Grid (Page 1 Mockup) -->
+          <div id="categoriesGrid" class="categories-grid">
+            <!-- Dynamic Category Cards render here -->
+          </div>
+
+          <!-- Active Booking Banner (Page 1 Mockup) -->
+          <div class="active-booking-section">
+            <div class="section-title">
+              <span data-i18n="activeBookingTitle">Active Booking (सक्रिय बुकिंग)</span>
+            </div>
+            <div id="activeBookingContainer">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Trust Banner (Page 1 Mockup) -->
+          <div class="trust-banner">
+            <div class="trust-title">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span data-i18n="trustTitle">100% सत्यापन | सुरक्षित भुगतान</span>
+            </div>
+            <div class="trusted-partners-row">
+              <span data-i18n="trustedPartners">Trusted Partners: UPI, Razorpay, BHIM, Aadhaar</span>
+              <div class="partner-chips">
+                <span class="partner-chip">UPI</span>
+                <span class="partner-chip">Razorpay</span>
+                <span class="partner-chip">UIDAI</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Customer Reviews Carousel (Page 1 Mockup) -->
+          <div class="recent-reviews-section">
+            <div class="section-title">
+              <span data-i18n="recentReviews">Recent Satisfied Customer Reviews</span>
+              <span style="font-size:12px; color:var(--primary); font-weight:600; cursor:pointer;" data-i18n="viewAll">View all &gt;</span>
+            </div>
+            <div id="reviewsCarousel" class="reviews-carousel">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= Screen 2: My Bookings View ================= -->
+        <section id="screen-orders" class="screen-view">
+          <div class="booking-tabs-header">
+            <button id="tabBtnUpcoming" class="booking-tab-btn active" onclick="setBookingTab('upcoming')">
+              <span data-i18n="upcomingTab">Upcoming</span>
+            </button>
+            <button id="tabBtnHistory" class="booking-tab-btn" onclick="setBookingTab('history')">
+              <span data-i18n="historyTab">History</span>
+            </button>
+          </div>
+
+          <div id="bookingsListContainer">
+            <!-- Rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- ================= Screen 3: Payments & Wallet View ================= -->
+        <section id="screen-payments" class="screen-view">
+          <!-- WorkMate Wallet Card (Screen 3 Mockup) -->
+          <div class="wallet-card-main">
+            <div class="wallet-card-top">
+              <span data-i18n="walletBalanceTitle">WorkMate Wallet</span>
+              <i class="fa-solid fa-wallet" style="font-size:20px;"></i>
+            </div>
+            <div id="walletBalanceAmount" class="wallet-balance-amount">₹13,000</div>
+            <div class="wallet-actions-row">
+              <button class="btn-wallet-action btn-add-money" onclick="openAddMoneyModal()">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="addMoney">+ Add Money</span>
+              </button>
+              <button class="btn-wallet-action btn-payout-money" onclick="openPayoutModal()">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> <span data-i18n="payout">Payout</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Connected Methods (Screen 3 Mockup) -->
+          <div class="connected-methods-section">
+            <div class="section-title" data-i18n="connectedMethods">Connected Methods</div>
+            <div class="method-row">
+              <div class="method-info">
+                <div class="method-icon" style="background:#ecfdf5; color:#059669;">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700;" data-i18n="verifiedUpi">Verified UPI</div>
+                  <div style="font-size:11px; color:#64748b;">ramesh@okhdfcbank</div>
+                </div>
+              </div>
+              <span style="font-size:11px; color:#059669; font-weight:700;">ACTIVE</span>
+            </div>
+            <div class="method-row">
+              <div class="method-info">
+                <div class="method-icon" style="background:#eff6ff; color:#2563eb;">
+                  <i class="fa-brands fa-cc-visa"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700;" data-i18n="verifiedCard">Bank, Debit Cards</div>
+                  <div style="font-size:11px; color:#64748b;">HDFC Platinum (•••• 4092)</div>
+                </div>
+              </div>
+              <span style="font-size:11px; color:#059669; font-weight:700;">VERIFIED</span>
+            </div>
+            <div class="razorpay-badge-row">
+              <i class="fa-solid fa-shield-check"></i>
+              <span data-i18n="razorpayBadge">Payment Secure (Razorpay Gateway)</span>
+            </div>
+          </div>
+
+          <!-- Transaction History (Screen 3 Mockup) -->
+          <div>
+            <div class="section-title" data-i18n="txHistory">Transaction History</div>
+            <div id="transactionHistoryContainer" class="tx-history-list">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= Screen 4: My Account View ================= -->
+        <section id="screen-account" class="screen-view">
+          <!-- Profile Card (Screen 4 Mockup) -->
+          <div class="account-profile-header">
+            <img class="account-avatar-large" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User">
+            <div class="account-info-box">
+              <h3 id="accountUserName">Ramesh Kumar (रमेश)</h3>
+              <p style="font-size:12px; color:#64748b; margin-top:2px;">+91 98765 43210</p>
+              <div style="margin-top:6px;">
+                <span class="verified-badge-pill" style="background:#ecfdf5; color:#059669; border-color:#059669;">
+                  <i class="fa-solid fa-circle-check"></i> <span data-i18n="accountVerified">Verified Profile</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Menu Options (Screen 4 Mockup) -->
+          <div class="account-menu-list">
+            <div class="account-menu-item" onclick="toggleLanguage()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-globe"></i>
+                <span data-i18n="menuLanguage">Language (भाषा)</span>
+              </div>
+              <span style="font-size:12px; color:var(--primary); font-weight:700;" id="currentLangLabel">हिंदी / English &gt;</span>
+            </div>
+            <div class="account-menu-item" onclick="openInsuranceModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <span data-i18n="menuInsurance">Micro-Insurance Enrollment</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
+            </div>
+            <div class="account-menu-item" onclick="openWorkerOnboardModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-helmet-safety"></i>
+                <span data-i18n="menuWorkerOnboard">Register as Worker Partner (KYC)</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
+            </div>
+            <div class="account-menu-item" onclick="openSupportModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-headset"></i>
+                <span data-i18n="menuSupport">24/7 Support (Call / Chat)</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
+            </div>
+            <div class="account-menu-item" onclick="showToast('Security & biometric authentication is enabled.')">
+              <div class="account-item-left">
+                <i class="fa-solid fa-lock"></i>
+                <span data-i18n="menuSecurity">Security & Privacy</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Floating Quick Book Button -->
+      <button class="fab-quick-book" onclick="openBookingForCategory('construction')">
+        <i class="fa-solid fa-bolt"></i>
+        <span data-i18n="quickBookBtn">Instant Book</span>
+      </button>
+
+      <!-- Bottom Navigation Bar (Page 1 Mockup) -->
+      <nav class="bottom-nav-bar">
+        <button id="nav-home" class="nav-item-btn active" onclick="switchTab('home')">
+          <i class="fa-solid fa-house"></i>
+          <span data-i18n="navHome">Home</span>
+        </button>
+        <button id="nav-orders" class="nav-item-btn" onclick="switchTab('orders')">
+          <i class="fa-solid fa-bag-shopping"></i>
+          <span data-i18n="navOrders">Order</span>
+        </button>
+        <button id="nav-payments" class="nav-item-btn" onclick="switchTab('payments')">
+          <i class="fa-solid fa-credit-card"></i>
+          <span data-i18n="navPayments">Payments</span>
+        </button>
+        <button id="nav-account" class="nav-item-btn" onclick="switchTab('account')">
+          <i class="fa-solid fa-circle-user"></i>
+          <span data-i18n="navAccount">Account</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Modal 1: Place New Booking -->
+  <div id="modalBooking" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Book Blue-Collar Labour</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalBooking')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitBooking(event)">
+          <div class="form-group">
+            <label class="form-label">Select Service / Trade (सेवा चयन)</label>
+            <select id="bookingServiceSelect" class="form-select" required></select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Booking Type (बुकिंग प्रकार)</label>
+            <select id="bookingTypeSelect" class="form-select">
+              <option value="instant">⚡ Instant Booking (15 Min Emergency Arrival)</option>
+              <option value="scheduled">📅 Scheduled Booking (Choose Date/Time)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Duration (कार्य समय)</label>
+            <select id="bookingDurationHours" class="form-select">
+              <option value="4">Half Day (4 Hours)</option>
+              <option value="8" selected>Full Day (8 Hours - Standard)</option>
+              <option value="12">Extended Shift (12 Hours)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Location / Address (पता)</label>
+            <input type="text" id="bookingAddressInput" class="form-input" value="Flat 402, Lotus Tower, Sector 14, Noida" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Special Requirements / Notes (विवरण)</label>
+            <textarea id="bookingNotesInput" class="form-textarea" rows="2" placeholder="e.g. Masonry plaster, bringing own trowel..."></textarea>
+          </div>
+
+          <div style="background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:16px;">
+            <div style="font-size:12px; color:#64748b;">Estimated Upfront Cost:</div>
+            <div id="bookingPriceEstimate" style="font-size:18px; color:var(--primary); font-weight:800;">₹750</div>
+          </div>
+
+          <button type="submit" class="btn-submit-primary">
+            <i class="fa-solid fa-check"></i> Confirm &amp; Dispatch Labour
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Live GPS Tracking & Route Map -->
+  <div id="modalTracking" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Live GPS Tracking (लाइव ट्रैकिंग)</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalTracking')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <canvas id="trackingCanvas"></canvas>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:12px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong id="trackingWorkerName">Mukesh Verma</strong>
+              <div style="font-size:12px; color:#2563eb;" id="trackingWorkerPhone">+91 98234 11092</div>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-size:11px; color:#64748b;">Arrival OTP:</span>
+              <div id="trackingOtpCode" style="font-size:16px; font-weight:800; color:#1e40af;">4567</div>
+            </div>
+          </div>
+          <div style="margin-top:8px; font-size:12px; color:#1e3a8a; font-weight:600; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-stopwatch"></i> Live ETA: <span id="trackingEtaTime">15 mins</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-submit-primary" style="flex:1; background:#10b981;" onclick="showToast('Calling worker: +91 98234 11092...')">
+            <i class="fa-solid fa-phone"></i> Call Worker
+          </button>
+          <button class="btn-submit-primary" style="flex:1; background:#ef4444;" onclick="closeModal('modalTracking'); showToast('Booking retained');">
+            Close View
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: OTP Verification & Work Completion -->
+  <div id="modalVerifyOtp" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Service Verification &amp; Finish</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalVerifyOtp')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitOtpVerification(event)">
+          <input type="hidden" id="verifyOtpBookingId">
+          <p style="font-size:13px; color:#64748b; margin-bottom:12px;">
+            Worker verifies OTP upon arrival at your doorstep to start work timer.
+          </p>
+          <div style="background:#fefce8; border:1px solid #fef08a; padding:10px; border-radius:6px; margin-bottom:14px; font-size:13px; color:#854d0e; font-weight:600;" id="verifyOtpHint">
+            Customer OTP: 4567
+          </div>
+          <div class="form-group">
+            <label class="form-label">Enter 4-Digit OTP</label>
+            <input type="text" id="verifyOtpInput" class="form-input" maxlength="4" placeholder="4567" required style="font-size:20px; letter-spacing:4px; text-align:center;">
+          </div>
+          <button type="submit" class="btn-submit-primary" style="margin-bottom:10px;">
+            <i class="fa-solid fa-check"></i> Verify OTP &amp; Start Job
+          </button>
+        </form>
+        <button class="btn-submit-primary" style="background:#10b981;" onclick="triggerCompleteJob(document.getElementById('verifyOtpBookingId').value)">
+          <i class="fa-solid fa-flag-checkered"></i> Confirm Job Finished (Release Payout)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Add Money to Wallet -->
+  <div id="modalAddMoney" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Add Money to Wallet</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalAddMoney')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitAddMoney(event)">
+          <div class="form-group">
+            <label class="form-label">Amount (₹)</label>
+            <input type="number" id="addMoneyAmount" class="form-input" value="2000" min="100" step="100" required>
+          </div>
+          <div style="display:flex; gap:8px; margin-bottom:16px;">
+            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(1000)">+₹1,000</button>
+            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(2500)">+₹2,500</button>
+            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(5000)">+₹5,000</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Payment Method (भुगतान माध्यम)</label>
+            <select id="addMoneyMethod" class="form-select">
+              <option value="UPI">Verified UPI (GPay / PhonePe / Paytm)</option>
+              <option value="Cards">HDFC Debit Card (•••• 4092)</option>
+              <option value="NetBanking">Net Banking</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-submit-primary">
+            <i class="fa-solid fa-shield-check"></i> Pay Securely via Razorpay
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Worker KYC Onboarding (Phase 1) -->
+  <div id="modalWorkerOnboard" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Worker KYC Onboarding (श्रमिक पंजीकरण)</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalWorkerOnboard')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitWorkerOnboarding(event)">
+          <div class="form-group">
+            <label class="form-label">Full Name (पूरा नाम)</label>
+            <input type="text" id="workerNameInput" class="form-input" placeholder="e.g. Ramprasad Meena" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number (मोबाइल नंबर)</label>
+            <input type="tel" id="workerPhoneInput" class="form-input" placeholder="+91 98765 00000" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">12-Digit Aadhaar Number (आधार कार्ड नंबर)</label>
+            <input type="text" id="workerAadhaarInput" class="form-input" placeholder="1234 5678 9012" maxlength="14" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sector (कार्य क्षेत्र)</label>
+            <select id="workerCatSelect" class="form-select">
+              <option value="construction">Construction (निर्माण व राजमिस्त्री)</option>
+              <option value="events">Events &amp; Catering (कैटरिंग स्टाफ)</option>
+              <option value="shifting">House Shifting (सामान उठाना)</option>
+              <option value="textile">Textile Helper (कपड़ा मिल हेल्पर)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Primary Trade Skill (कौशल प्रोफाइल)</label>
+            <input type="text" id="workerTradeInput" class="form-input" placeholder="e.g. Master Mason / Tile Specialist" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Expected Daily Wage / Rate (₹ प्रतिदिन)</label>
+            <input type="number" id="workerRateInput" class="form-input" value="750" required>
+          </div>
+          <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" id="workerPoliceConsent" checked required>
+            <label for="workerPoliceConsent" style="font-size:12px; color:#475569;">
+              I consent to police background check &amp; Aadhaar e-KYC verification (Phase 1).
+            </label>
+          </div>
+          <button type="submit" class="btn-submit-primary">
+            <i class="fa-solid fa-id-card-clip"></i> Submit KYC &amp; Get Verified
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Rating & Review -->
+  <div id="modalReview" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Rate &amp; Review Worker</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalReview')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitReview(event)">
+          <input type="hidden" id="reviewBookingId">
+          <input type="hidden" id="reviewWorkerId">
+          <p style="font-size:13px; margin-bottom:12px;">
+            How was your experience with <strong id="reviewWorkerName">Mukesh Verma</strong>?
+          </p>
+          <div class="form-group">
+            <label class="form-label">Star Rating (स्टार रेटिंग)</label>
+            <select id="reviewRatingSelect" class="form-select">
+              <option value="5">★★★★★ (5 Stars - Excellent)</option>
+              <option value="4">★★★★☆ (4 Stars - Very Good)</option>
+              <option value="3">★★★☆☆ (3 Stars - Average)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Comments (समीक्षा)</label>
+            <textarea id="reviewCommentInput" class="form-textarea" rows="3" placeholder="Punctual, polite and skillful work..."></textarea>
+          </div>
+          <button type="submit" class="btn-submit-primary">
+            <i class="fa-solid fa-paper-plane"></i> Submit Review
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 7: Micro-Insurance Info -->
+  <div id="modalInsurance" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Micro-Insurance Enrollment</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalInsurance')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:14px; margin-bottom:16px;">
+          <h4 style="color:#065f46; margin-bottom:4px;"><i class="fa-solid fa-shield-heart"></i> WorkMate Shramik Suraksha Bima</h4>
+          <p style="font-size:12px; color:#047857;">
+            ₹2,00,000 accidental insurance + ₹25,000 OPD medical coverage for on-duty workers and helpers.
+          </p>
+        </div>
+        <div style="font-size:13px; color:#334155; margin-bottom:16px;">
+          <p>✓ Instant policy issuance linked to Aadhaar</p>
+          <p>✓ 100% cashless claims at network hospitals</p>
+          <p>✓ Subsidized by WorkMate Corporate CSR Pool</p>
+        </div>
+        <button class="btn-submit-primary" onclick="showToast('Enrolled in Micro-Insurance!'); closeModal('modalInsurance');">
+          Enroll Now (₹19 / month)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 8: 24/7 Support -->
+  <div id="modalSupport" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>24/7 Support Helpdesk</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalSupport')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn-submit-primary" style="background:#2563eb;" onclick="showToast('Calling Toll-Free Support: 1800-123-WORK');">
+            <i class="fa-solid fa-phone"></i> Call Toll-Free (1800-123-WORK)
+          </button>
+          <button class="btn-submit-primary" style="background:#16a34a;" onclick="showToast('Opening WhatsApp Support Chat...');">
+            <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/wallet.js"></script>
+  <script src="/static/js/tracking.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script>
+    function setBookingTab(tab) {
+      document.querySelectorAll(".booking-tab-btn").forEach(b => b.classList.remove("active"));
+      if (tab === "upcoming") {
+        document.getElementById("tabBtnUpcoming").classList.add("active");
+        renderBookings("upcoming");
+      } else {
+        document.getElementById("tabBtnHistory").classList.add("active");
+        renderBookings("history");
+      }
+    }
+
+    function openPayoutModal() {
+      const amt = prompt("Enter payout withdrawal amount (₹):", "5000");
+      if (amt && !isNaN(amt)) {
+        handlePayout(amt).then(() => {
+          showToast(`Payout of ₹${amt} initiated via UPI!`, "success");
+          loadInitialData();
+        }).catch(e => showToast(e.message, "error"));
+      }
+    }
+
+    function openInsuranceModal() {
+      document.getElementById("modalInsurance").classList.add("active");
+    }
+
+    function openSupportModal() {
+      document.getElementById("modalSupport").classList.add("active");
+    }
+  </script>
+</body>
+</html>

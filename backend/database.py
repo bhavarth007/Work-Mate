@@ -1,0 +1,584 @@
+"""
+WorkMate Database Persistence Layer
+SQLite storage with thread-safe access and robust validation.
+"""
+import sqlite3
+import json
+import os
+import threading
+import uuid
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+DB_FILE = os.path.join(os.path.dirname(__file__), "workmate.db")
+_lock = threading.Lock()
+
+def get_connection():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    """Initializes the database schema and seeds initial data if empty."""
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Categories
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS categories (
+                id TEXT PRIMARY KEY,
+                name_en TEXT NOT NULL,
+                name_hi TEXT NOT NULL,
+                subtext_en TEXT,
+                subtext_hi TEXT,
+                icon TEXT,
+                rating REAL DEFAULT 4.8,
+                services_count INTEGER DEFAULT 4
+            )
+        """)
+
+        # Services
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS services (
+                id TEXT PRIMARY KEY,
+                category_id TEXT NOT NULL,
+                name_en TEXT NOT NULL,
+                name_hi TEXT NOT NULL,
+                desc_en TEXT,
+                desc_hi TEXT,
+                base_rate REAL NOT NULL,
+                unit TEXT NOT NULL,
+                popular INTEGER DEFAULT 0,
+                FOREIGN KEY (category_id) REFERENCES categories(id)
+            )
+        """)
+
+        # Workers
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS workers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                photo TEXT,
+                primary_trade TEXT NOT NULL,
+                primary_trade_hi TEXT NOT NULL,
+                category_id TEXT NOT NULL,
+                rating REAL DEFAULT 4.8,
+                reviews_count INTEGER DEFAULT 0,
+                hourly_rate REAL NOT NULL,
+                daily_rate REAL NOT NULL,
+                aadhaar_verified INTEGER DEFAULT 1,
+                police_verified INTEGER DEFAULT 1,
+                kyc_status TEXT DEFAULT 'verified',
+                experience_years INTEGER DEFAULT 3,
+                is_available INTEGER DEFAULT 1,
+                current_lat REAL DEFAULT 28.6139,
+                current_lng REAL DEFAULT 77.2090,
+                bio_en TEXT,
+                bio_hi TEXT
+            )
+        """)
+
+        # Bookings
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bookings (
+                id TEXT PRIMARY KEY,
+                booking_number TEXT UNIQUE NOT NULL,
+                customer_name TEXT NOT NULL,
+                customer_phone TEXT NOT NULL,
+                worker_id TEXT,
+                worker_name TEXT,
+                worker_photo TEXT,
+                worker_rating REAL DEFAULT 4.8,
+                worker_trade TEXT,
+                worker_trade_hi TEXT,
+                service_id TEXT NOT NULL,
+                service_name_en TEXT NOT NULL,
+                service_name_hi TEXT NOT NULL,
+                task_description TEXT NOT NULL,
+                booking_type TEXT NOT NULL,
+                scheduled_date_time TEXT NOT NULL,
+                duration_hours INTEGER DEFAULT 4,
+                total_cost REAL NOT NULL,
+                commission_amount REAL NOT NULL,
+                worker_payout_amount REAL NOT NULL,
+                otp TEXT NOT NULL,
+                eta_minutes INTEGER DEFAULT 15,
+                status TEXT NOT NULL,
+                location_address TEXT NOT NULL,
+                lat REAL NOT NULL,
+                lng REAL NOT NULL,
+                worker_lat REAL NOT NULL,
+                worker_lng REAL NOT NULL,
+                created_at TEXT NOT NULL,
+                completed_at TEXT,
+                is_rated INTEGER DEFAULT 0
+            )
+        """)
+
+        # Wallet
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS wallet (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                balance REAL DEFAULT 13000.0,
+                currency TEXT DEFAULT 'INR',
+                symbol TEXT DEFAULT '₹',
+                upi_verified TEXT DEFAULT 'ramesh@okhdfcbank',
+                card_verified TEXT DEFAULT 'HDFC Platinum Debit (•••• 4092)',
+                razorpay_connected INTEGER DEFAULT 1
+            )
+        """)
+
+        # Transactions
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id TEXT PRIMARY KEY,
+                type TEXT NOT NULL,
+                amount REAL NOT NULL,
+                direction TEXT NOT NULL,
+                title_en TEXT NOT NULL,
+                title_hi TEXT NOT NULL,
+                status TEXT DEFAULT 'success',
+                date_str TEXT NOT NULL,
+                method TEXT NOT NULL,
+                reference_id TEXT NOT NULL
+            )
+        """)
+
+        # Reviews
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id TEXT PRIMARY KEY,
+                booking_id TEXT NOT NULL,
+                worker_id TEXT NOT NULL,
+                worker_name TEXT NOT NULL,
+                customer_name TEXT NOT NULL,
+                rating INTEGER NOT NULL,
+                tags_json TEXT,
+                comment TEXT,
+                date_str TEXT NOT NULL
+            )
+        """)
+
+        conn.commit()
+
+        # Check if seeder is needed
+        cursor.execute("SELECT COUNT(*) FROM categories")
+        if cursor.fetchone()[0] == 0:
+            from .seed_data import (
+                INITIAL_CATEGORIES, INITIAL_SERVICES, INITIAL_WORKERS,
+                INITIAL_BOOKINGS, INITIAL_WALLET, INITIAL_TRANSACTIONS, INITIAL_REVIEWS
+            )
+
+            # Insert categories
+            for c in INITIAL_CATEGORIES:
+                cursor.execute("""
+                    INSERT INTO categories (id, name_en, name_hi, subtext_en, subtext_hi, icon, rating, services_count)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (c["id"], c["name_en"], c["name_hi"], c["subtext_en"], c["subtext_hi"], c["icon"], c["rating"], c["services_count"]))
+
+            # Insert services
+            for s in INITIAL_SERVICES:
+                cursor.execute("""
+                    INSERT INTO services (id, category_id, name_en, name_hi, desc_en, desc_hi, base_rate, unit, popular)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (s["id"], s["category_id"], s["name_en"], s["name_hi"], s["desc_en"], s["desc_hi"], s["base_rate"], s["unit"], 1 if s.get("popular") else 0))
+
+            # Insert workers
+            for w in INITIAL_WORKERS:
+                cursor.execute("""
+                    INSERT INTO workers (id, name, phone, photo, primary_trade, primary_trade_hi, category_id, rating, reviews_count, hourly_rate, daily_rate, aadhaar_verified, police_verified, kyc_status, experience_years, is_available, current_lat, current_lng, bio_en, bio_hi)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (w["id"], w["name"], w["phone"], w["photo"], w["primary_trade"], w["primary_trade_hi"], w["category_id"], w["rating"], w["reviews_count"], w["hourly_rate"], w["daily_rate"], 1 if w["aadhaar_verified"] else 0, 1 if w["police_verified"] else 0, w["kyc_status"], w["experience_years"], 1 if w["is_available"] else 0, w["current_lat"], w["current_lng"], w.get("bio_en"), w.get("bio_hi")))
+
+            # Insert wallet
+            cursor.execute("""
+                INSERT OR REPLACE INTO wallet (id, balance, currency, symbol, upi_verified, card_verified, razorpay_connected)
+                VALUES (1, ?, ?, ?, ?, ?, ?)
+            """, (INITIAL_WALLET["balance"], INITIAL_WALLET["currency"], INITIAL_WALLET["symbol"], INITIAL_WALLET["upi_verified"], INITIAL_WALLET["card_verified"], 1 if INITIAL_WALLET["razorpay_connected"] else 0))
+
+            # Insert transactions
+            for tx in INITIAL_TRANSACTIONS:
+                cursor.execute("""
+                    INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (tx["id"], tx["type"], tx["amount"], tx["direction"], tx["title_en"], tx["title_hi"], tx["status"], tx["date_str"], tx["method"], tx["reference_id"]))
+
+            # Insert bookings
+            for b in INITIAL_BOOKINGS:
+                cursor.execute("""
+                    INSERT INTO bookings (id, booking_number, customer_name, customer_phone, worker_id, worker_name, worker_photo, worker_rating, worker_trade, worker_trade_hi, service_id, service_name_en, service_name_hi, task_description, booking_type, scheduled_date_time, duration_hours, total_cost, commission_amount, worker_payout_amount, otp, eta_minutes, status, location_address, lat, lng, worker_lat, worker_lng, created_at, completed_at, is_rated)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (b["id"], b["booking_number"], b["customer_name"], b["customer_phone"], b["worker_id"], b["worker_name"], b["worker_photo"], b["worker_rating"], b["worker_trade"], b["worker_trade_hi"], b["service_id"], b["service_name_en"], b["service_name_hi"], b["task_description"], b["booking_type"], b["scheduled_date_time"], b["duration_hours"], b["total_cost"], b["commission_amount"], b["worker_payout_amount"], b["otp"], b["eta_minutes"], b["status"], b["location_address"], b["lat"], b["lng"], b["worker_lat"], b["worker_lng"], b["created_at"], b["completed_at"], 1 if b["is_rated"] else 0))
+
+            # Insert reviews
+            for r in INITIAL_REVIEWS:
+                cursor.execute("""
+                    INSERT INTO reviews (id, booking_id, worker_id, worker_name, customer_name, rating, tags_json, comment, date_str)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (r["id"], r["booking_id"], r["worker_id"], r["worker_name"], r["customer_name"], r["rating"], json.dumps(r["tags"]), r["comment"], r["date_str"]))
+
+            conn.commit()
+
+        conn.close()
+
+# Repository Operations
+
+def get_categories() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM categories ORDER BY id").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_services(category_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    if category_id:
+        rows = conn.execute("SELECT * FROM services WHERE category_id = ? ORDER BY popular DESC, name_en", (category_id,)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM services ORDER BY category_id, popular DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_service_by_id(service_id: str) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM services WHERE id = ?", (service_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_workers(category_id: Optional[str] = None, available_only: bool = False) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    query = "SELECT * FROM workers WHERE 1=1"
+    params = []
+    if category_id:
+        query += " AND category_id = ?"
+        params.append(category_id)
+    if available_only:
+        query += " AND is_available = 1"
+    query += " ORDER BY rating DESC, reviews_count DESC"
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_worker_by_id(worker_id: str) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM workers WHERE id = ?", (worker_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def create_worker(worker_data: Dict[str, Any]) -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        worker_id = f"w-{uuid.uuid4().hex[:6]}"
+        cursor.execute("""
+            INSERT INTO workers (
+                id, name, phone, photo, primary_trade, primary_trade_hi, category_id,
+                rating, reviews_count, hourly_rate, daily_rate, aadhaar_verified,
+                police_verified, kyc_status, experience_years, is_available,
+                current_lat, current_lng, bio_en, bio_hi
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            worker_id,
+            worker_data["name"],
+            worker_data["phone"],
+            worker_data.get("photo") or "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+            worker_data["primary_trade"],
+            worker_data.get("primary_trade_hi") or worker_data["primary_trade"],
+            worker_data["category_id"],
+            5.0,  # New worker starts with top rating
+            0,
+            round(worker_data["daily_rate"] / 8.0, 2),
+            worker_data["daily_rate"],
+            1,  # Verified KYC
+            1 if worker_data.get("police_check_consent") else 0,
+            "verified",
+            worker_data.get("experience_years", 2),
+            1,
+            28.6139,
+            77.2090,
+            f"Verified professional in {worker_data['primary_trade']}",
+            f"{worker_data['primary_trade']} में सत्यापित कारीगर"
+        ))
+        conn.commit()
+        created = get_worker_by_id(worker_id)
+        conn.close()
+        return created
+
+def get_bookings(status: Optional[str] = None) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    if status:
+        rows = conn.execute("SELECT * FROM bookings WHERE status = ? ORDER BY created_at DESC", (status,)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM bookings ORDER BY CASE status WHEN 'in_progress' THEN 1 WHEN 'upcoming' THEN 2 WHEN 'completed' THEN 3 ELSE 4 END, created_at DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_booking_by_id(booking_id: str) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def create_booking(data: Dict[str, Any]) -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        booking_id = f"b-{uuid.uuid4().hex[:8]}"
+        # Generate booking number format like WM-2026-049
+        cursor.execute("SELECT COUNT(*) FROM bookings")
+        cnt = cursor.fetchone()[0] + 50
+        booking_number = f"WM-2026-{cnt:03d}"
+
+        # Fetch service details
+        service = get_service_by_id(data["service_id"])
+        if not service:
+            service = {
+                "name_en": "General Skilled Labour",
+                "name_hi": "कुशल लेबर",
+                "base_rate": 600.0,
+                "category_id": "construction"
+            }
+
+        # Dynamic worker matching algorithm (Phase 3 of Photo.pdf)
+        cursor.execute("""
+            SELECT * FROM workers 
+            WHERE category_id = ? AND is_available = 1 
+            ORDER BY rating DESC LIMIT 1
+        """, (service.get("category_id", "construction"),))
+        matched_worker = cursor.fetchone()
+
+        if matched_worker:
+            worker_dict = dict(matched_worker)
+            worker_id = worker_dict["id"]
+            worker_name = worker_dict["name"]
+            worker_photo = worker_dict["photo"]
+            worker_rating = worker_dict["rating"]
+            worker_trade = worker_dict["primary_trade"]
+            worker_trade_hi = worker_dict["primary_trade_hi"]
+            worker_lat = worker_dict["current_lat"]
+            worker_lng = worker_dict["current_lng"]
+            # Mark worker temporarily busy
+            cursor.execute("UPDATE workers SET is_available = 0 WHERE id = ?", (worker_id,))
+        else:
+            # Fallback assigned worker
+            worker_id = "w-1"
+            worker_name = "Mukesh Verma"
+            worker_photo = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+            worker_rating = 4.8
+            worker_trade = "Rajmistri (Mason)"
+            worker_trade_hi = "राजमिस्त्री"
+            worker_lat = 28.6180
+            worker_lng = 77.2140
+
+        duration = data.get("duration_hours", 4)
+        base_rate = service.get("base_rate", 600.0)
+        # Cost calculation: Rate * (hours/8 if daily, or hours * hourly rate)
+        subtotal = round(base_rate * (duration / 8.0 if duration >= 8 else duration / 4.0), 2)
+        # 10% WorkMate commission per booking (from Photo.pdf)
+        commission = round(subtotal * 0.10, 2)
+        # Emergency charge if instant (<30 min dispatch)
+        emergency_charge = 150.0 if data.get("booking_type") == "instant" else 0.0
+        total_cost = subtotal + emergency_charge
+        worker_payout = subtotal - commission
+
+        import random
+        otp = f"{random.randint(1000, 9999)}"
+        created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        status = "in_progress" if data.get("booking_type") == "instant" else "upcoming"
+
+        scheduled_text = (
+            "Right Now (15 Min Instant Arrival)"
+            if data.get("booking_type") == "instant"
+            else f"{data.get('scheduled_date', 'Today')}, {data.get('scheduled_time', '10:00 AM')}"
+        )
+
+        cursor.execute("""
+            INSERT INTO bookings (
+                id, booking_number, customer_name, customer_phone, worker_id, worker_name,
+                worker_photo, worker_rating, worker_trade, worker_trade_hi, service_id,
+                service_name_en, service_name_hi, task_description, booking_type,
+                scheduled_date_time, duration_hours, total_cost, commission_amount,
+                worker_payout_amount, otp, eta_minutes, status, location_address,
+                lat, lng, worker_lat, worker_lng, created_at, completed_at, is_rated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            booking_id, booking_number, data.get("customer_name", "Ramesh Kumar"),
+            data.get("customer_phone", "+91 98765 43210"), worker_id, worker_name,
+            worker_photo, worker_rating, worker_trade, worker_trade_hi,
+            service["id"], service["name_en"], service["name_hi"],
+            data["task_description"], data.get("booking_type", "instant"),
+            scheduled_text, duration, total_cost, commission, worker_payout,
+            otp, 15 if data.get("booking_type") == "instant" else 60,
+            status, data.get("location_address", "Flat 402, Sector 14, Noida"),
+            data.get("lat", 28.6139), data.get("lng", 77.2090),
+            worker_lat, worker_lng, created_at, None, 0
+        ))
+
+        # Add escrow transaction
+        tx_id = f"tx-{uuid.uuid4().hex[:6]}"
+        cursor.execute("""
+            INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            tx_id, "payment", total_cost, "debit",
+            f"Booking #{booking_number}", f"बुकिंग #{booking_number}",
+            "success", datetime.now().strftime("%b %d, %Y"),
+            "WorkMate Wallet / Escrow", f"ESCROW_{booking_id[:6].upper()}"
+        ))
+
+        conn.commit()
+        new_booking = get_booking_by_id(booking_id)
+        conn.close()
+        return new_booking
+
+def update_booking_status(booking_id: str, new_status: str) -> Optional[Dict[str, Any]]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if new_status == "completed" else None
+        
+        cursor.execute("""
+            UPDATE bookings 
+            SET status = ?, completed_at = COALESCE(?, completed_at)
+            WHERE id = ?
+        """, (new_status, completed_at, booking_id))
+        
+        # If completed, free up the worker and trigger direct worker payout
+        if new_status == "completed":
+            booking = get_booking_by_id(booking_id)
+            if booking and booking["worker_id"]:
+                cursor.execute("UPDATE workers SET is_available = 1 WHERE id = ?", (booking["worker_id"],))
+                # Add worker payout transaction record
+                tx_id = f"tx-{uuid.uuid4().hex[:6]}"
+                cursor.execute("""
+                    INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    tx_id, "payout", booking["worker_payout_amount"], "debit",
+                    f"Worker Payout: {booking['worker_name']}",
+                    f"श्रमिक भुगतान: {booking['worker_name']}",
+                    "success", datetime.now().strftime("%b %d, %Y"),
+                    "Direct UPI Payout", f"WM_PAY_{uuid.uuid4().hex[:6].upper()}"
+                ))
+
+        conn.commit()
+        updated = get_booking_by_id(booking_id)
+        conn.close()
+        return updated
+
+def verify_booking_otp(booking_id: str, submitted_otp: str) -> Dict[str, Any]:
+    booking = get_booking_by_id(booking_id)
+    if not booking:
+        return {"success": False, "message": "Booking not found"}
+    if booking["otp"].strip() == submitted_otp.strip():
+        # OTP verified! Job status is set to in_progress
+        update_booking_status(booking_id, "in_progress")
+        return {"success": True, "message": "OTP Verified successfully! Service commenced."}
+    return {"success": False, "message": "Incorrect OTP. Please enter the 4-digit OTP shown on customer screen."}
+
+def get_wallet() -> Dict[str, Any]:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM wallet WHERE id = 1").fetchone()
+    conn.close()
+    return dict(row) if row else {"balance": 13000.0, "currency": "INR", "symbol": "₹"}
+
+def deposit_wallet(amount: float, method: str = "UPI", upi_id: str = "ramesh@okhdfcbank") -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE wallet SET balance = balance + ? WHERE id = 1", (amount,))
+        tx_id = f"tx-{uuid.uuid4().hex[:6]}"
+        ref_id = f"RZP_DEP_{uuid.uuid4().hex[:6].upper()}"
+        cursor.execute("""
+            INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            tx_id, "deposit", amount, "credit",
+            "Add Money", "पैसे जोड़े", "success",
+            datetime.now().strftime("%b %d, %Y"),
+            f"{method} ({upi_id})", ref_id
+        ))
+        conn.commit()
+        updated_wallet = get_wallet()
+        conn.close()
+        return {"wallet": updated_wallet, "transaction_id": tx_id}
+
+def payout_wallet(amount: float, upi_id: str = "ramesh@okhdfcbank") -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        wallet = get_wallet()
+        if wallet["balance"] < amount:
+            conn.close()
+            return {"success": False, "message": "Insufficient wallet balance"}
+        
+        cursor.execute("UPDATE wallet SET balance = balance - ? WHERE id = 1", (amount,))
+        tx_id = f"tx-{uuid.uuid4().hex[:6]}"
+        ref_id = f"RZP_PAY_{uuid.uuid4().hex[:6].upper()}"
+        cursor.execute("""
+            INSERT INTO transactions (id, type, amount, direction, title_en, title_hi, status, date_str, method, reference_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            tx_id, "payout", amount, "debit",
+            "Wallet Payouts", "वॉलेट पेआउट", "success",
+            datetime.now().strftime("%b %d, %Y"),
+            f"Instant UPI Transfer ({upi_id})", ref_id
+        ))
+        conn.commit()
+        updated_wallet = get_wallet()
+        conn.close()
+        return {"success": True, "wallet": updated_wallet, "transaction_id": tx_id}
+
+def get_transactions() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM transactions ORDER BY rowid DESC").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_reviews() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM reviews ORDER BY rowid DESC").fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["tags"] = json.loads(d["tags_json"]) if d.get("tags_json") else []
+        result.append(d)
+    return result
+
+def create_review(data: Dict[str, Any]) -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        rev_id = f"rev-{uuid.uuid4().hex[:6]}"
+        
+        # Get worker name
+        worker = get_worker_by_id(data["worker_id"])
+        worker_name = worker["name"] if worker else "Verified Worker"
+
+        cursor.execute("""
+            INSERT INTO reviews (id, booking_id, worker_id, worker_name, customer_name, rating, tags_json, comment, date_str)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            rev_id, data["booking_id"], data["worker_id"], worker_name,
+            data.get("customer_name", "Ramesh Kumar"), data["rating"],
+            json.dumps(data.get("tags", [])), data.get("comment", ""),
+            datetime.now().strftime("%b %d, %Y")
+        ))
+
+        # Mark booking as rated
+        cursor.execute("UPDATE bookings SET is_rated = 1 WHERE id = ?", (data["booking_id"],))
+
+        # Update worker rating average
+        cursor.execute("""
+            UPDATE workers 
+            SET reviews_count = reviews_count + 1,
+                rating = ROUND((rating * 4 + ?) / 5.0, 1)
+            WHERE id = ?
+        """, (data["rating"], data["worker_id"]))
+
+        conn.commit()
+        conn.close()
+        return {"id": rev_id, "success": True}
