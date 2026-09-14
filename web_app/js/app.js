@@ -102,7 +102,9 @@ const I18N = {
     customerPreviewTab: "Customer View",
     adminHeroTitle: "WorkMate Rate & System Control",
     adminHeroSub: "Edit base prices for all 4 service modules in real-time. Changes instantly recalculate customer checkout totals.",
-    adminModulesHeader: "Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)"
+    adminModulesHeader: "Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)",
+    expandAll: "Expand All",
+    collapseAll: "Collapse All"
   },
   hi: {
     appName: "वर्कमेट (WorkMate)",
@@ -167,7 +169,9 @@ const I18N = {
     customerPreviewTab: "ग्राहक ऐप व्यू",
     adminHeroTitle: "वर्कमेट दर एवं सिस्टम नियंत्रण",
     adminHeroSub: "सभी 4 सर्विस मॉड्यूल्स की बेस दरें सीधे बदलें। नए मूल्य तुरंत वेबसाइट पर लागू होंगे।",
-    adminModulesHeader: "सर्विस मॉड्यूल मूल्य एवं बेस दरें (सभी 4 मॉड्यूल)"
+    adminModulesHeader: "सर्विस मॉड्यूल मूल्य एवं बेस दरें (सभी 4 मॉड्यूल)",
+    expandAll: "सभी खोलें",
+    collapseAll: "सभी समेटें"
   }
 };
 
@@ -1014,6 +1018,41 @@ async function savePlatformChargePercent() {
   }
 }
 
+function toggleAdminModule(catKey) {
+  if (!state.expandedAdminModules) {
+    state.expandedAdminModules = { construction: true, events: false, shifting: false, textile: false };
+  }
+  const isHi = state.lang === "hi";
+  const nowOpen = !state.expandedAdminModules[catKey];
+  state.expandedAdminModules[catKey] = nowOpen;
+
+  const card = document.getElementById(`admin-module-card-${catKey}`);
+  const list = document.getElementById(`admin-trades-list-${catKey}`);
+  const chevron = document.getElementById(`admin-module-chevron-${catKey}`);
+  const label = document.getElementById(`admin-dropdown-label-${catKey}`);
+
+  if (card && list) {
+    if (nowOpen) {
+      card.classList.remove("is-collapsed");
+      list.style.display = "flex";
+      if (label) label.textContent = isHi ? "छिपाएं" : "Hide";
+    } else {
+      card.classList.add("is-collapsed");
+      list.style.display = "none";
+      if (label) label.textContent = isHi ? "विवरण देखें" : "View Details";
+    }
+  }
+}
+
+function toggleAllAdminModules(open) {
+  const catKeys = ["construction", "events", "shifting", "textile"];
+  if (!state.expandedAdminModules) state.expandedAdminModules = {};
+  catKeys.forEach(k => {
+    state.expandedAdminModules[k] = open;
+  });
+  renderAdminModulesRates();
+}
+
 function renderAdminModulesRates() {
   const container = document.getElementById("adminModulesRatesContainer");
   if (!container) return;
@@ -1021,32 +1060,46 @@ function renderAdminModulesRates() {
   const isHi = state.lang === "hi";
   const catKeys = ["construction", "events", "shifting", "textile"];
 
+  if (!state.expandedAdminModules) {
+    // Construction open by default, other 3 collapsed into clean dropdowns
+    state.expandedAdminModules = { construction: true, events: false, shifting: false, textile: false };
+  }
+
   container.innerHTML = catKeys.map(catKey => {
     const meta = ADMIN_MODULES_META[catKey];
     const catServices = state.services.filter(s => s.category_id === catKey);
+    const isOpen = !!state.expandedAdminModules[catKey];
 
     return `
-      <div class="admin-module-card">
-        <div class="admin-module-header">
+      <div class="admin-module-card ${isOpen ? '' : 'is-collapsed'}" id="admin-module-card-${catKey}">
+        <div class="admin-module-header" onclick="toggleAdminModule('${catKey}')" title="${isHi ? 'ड्रॉपडाउन खोलने/बंद करने के लिए क्लिक करें' : 'Click to expand/collapse dropdown'}">
           <div class="admin-module-title-box">
             <div class="admin-module-icon-badge" style="background:${meta.color}; color:${meta.textColor};">
               <i class="fa-solid ${meta.icon}"></i>
             </div>
             <div>
-              <div style="font-size:14px; font-weight:800; color:#0f172a;">
-                ${isHi ? meta.name_hi : meta.name_en}
+              <div style="font-size:14px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                <span>${isHi ? meta.name_hi : meta.name_en}</span>
               </div>
               <div style="font-size:11px; color:#64748b;">
                 ${isHi ? meta.desc_hi : meta.desc_en}
               </div>
             </div>
           </div>
-          <span style="font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:12px;">
-            ${catServices.length} ${isHi ? 'ट्रेड्स' : 'Trades'}
-          </span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; font-weight:700; background:#f1f5f9; color:#475569; padding:3px 8px; border-radius:12px;">
+              ${catServices.length} ${isHi ? 'ट्रेड्स' : 'Trades'}
+            </span>
+            <div class="admin-dropdown-pill">
+              <span id="admin-dropdown-label-${catKey}">
+                ${isOpen ? (isHi ? 'छिपाएं' : 'Hide') : (isHi ? 'विवरण देखें' : 'View Details')}
+              </span>
+              <i class="fa-solid fa-chevron-down admin-module-chevron" id="admin-module-chevron-${catKey}"></i>
+            </div>
+          </div>
         </div>
 
-        <div class="admin-trades-list">
+        <div class="admin-trades-list" id="admin-trades-list-${catKey}" style="${isOpen ? '' : 'display:none;'}">
           ${catServices.map(serv => `
             <div class="admin-trade-item" id="admin-trade-item-${serv.id}">
               <div style="display:flex; justify-content:space-between; align-items:flex-start;">

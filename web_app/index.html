@@ -138,12 +138,22 @@
             </div>
           </div>
 
-          <!-- 4 Core Service Modules Price Editor -->
-          <div class="admin-section-header">
-            <span class="admin-section-tag"><i class="fa-solid fa-tags"></i> 4 Core Service Modules</span>
-            <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;" data-i18n="adminModulesHeader">
-              Service Module Pricing & Base Rates (सभी 4 मॉड्यूल की दरें)
-            </h3>
+          <!-- 4 Core Service Modules Price Editor with Dropdowns -->
+          <div class="admin-section-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span class="admin-section-tag"><i class="fa-solid fa-tags"></i> 4 Core Service Modules</span>
+              <h3 style="font-size:15px; font-weight:700; color:#0f172a; margin-top:4px;" data-i18n="adminModulesHeader">
+                Service Module Pricing &amp; Base Rates (सभी 4 मॉड्यूल की दरें)
+              </h3>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-toggle-all-modules" onclick="toggleAllAdminModules(true)" title="Expand all modules">
+                <i class="fa-solid fa-folder-open"></i> <span data-i18n="expandAll">Expand All</span>
+              </button>
+              <button type="button" class="btn-toggle-all-modules" onclick="toggleAllAdminModules(false)" title="Collapse all modules">
+                <i class="fa-solid fa-folder"></i> <span data-i18n="collapseAll">Collapse All</span>
+              </button>
+            </div>
           </div>
 
           <!-- Dynamic 4 Modules Rate Container -->
