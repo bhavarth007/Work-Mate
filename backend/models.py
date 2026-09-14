@@ -154,3 +154,11 @@ class Review(BaseModel):
     tags: List[str]
     comment: str
     date_str: str
+
+class UserProfileUpdate(BaseModel):
+    name: str = Field(..., min_length=2)
+    phone: str = Field(..., min_length=10)
+    address: str = Field(..., min_length=5)
+    city: str = Field(..., min_length=2)
+    email: Optional[str] = None
+

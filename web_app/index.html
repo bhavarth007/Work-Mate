@@ -15,52 +15,33 @@
 <body>
 
   <div class="viewport-wrapper">
-    <!-- Top Developer & Viewport Controls -->
-    <div class="dev-controls-bar">
-      <div class="brand-badge">
-        <i class="fa-solid fa-users-gear"></i> WorkMate <span style="font-size:11px; opacity:0.8; font-weight:normal;">(वर्कमेट)</span>
-      </div>
-      <div class="controls-group">
-        <button id="btnViewMobile" class="btn-toggle-view active" onclick="toggleDeviceView('mobile')">
-          <i class="fa-solid fa-mobile-screen"></i> Mobile App
-        </button>
-        <button id="btnViewDesktop" class="btn-toggle-view" onclick="toggleDeviceView('desktop')">
-          <i class="fa-solid fa-desktop"></i> Web App
-        </button>
-        <button id="btnLangToggle" class="btn-lang-toggle" onclick="toggleLanguage()">
-          <i class="fa-solid fa-language"></i> हिंदी / English
-        </button>
-        <button class="btn-role-toggle" onclick="openWorkerOnboardModal()">
-          <i class="fa-solid fa-id-card"></i> <span data-i18n="menuWorkerOnboard">Worker KYC</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Main App Container (Adaptive Device Shell) -->
+    <!-- Main App Container (Clean, Modern Responsive Native Layout) -->
     <div id="appContainer" class="app-container">
-      <!-- Status bar (for phone frame) -->
-      <div class="phone-status-bar">
-        <span>9:41</span>
-        <div class="status-bar-icons">
-          <i class="fa-solid fa-signal"></i>
-          <i class="fa-solid fa-wifi"></i>
-          <i class="fa-solid fa-battery-full"></i>
-        </div>
-      </div>
-
-      <!-- App Header -->
+      
+      <!-- App Header with Google Translate Style Language Switcher -->
       <header class="app-header">
-        <div class="header-location-box">
+        <div class="header-left">
           <div class="location-dropdown" onclick="showToast('Location fixed to registered address')">
             <i class="fa-solid fa-location-dot"></i>
-            <span data-i18n="location">Flat 402, Sector 14, Noida</span>
+            <span id="headerLocationText">Flat 402, Lotus Tower, Sector 14</span>
             <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
           </div>
-          <div class="user-greeting" data-i18n="greeting">नमस्ते, रमेश!</div>
+          <div class="user-greeting" id="userGreetingText">नमस्ते, रमेश!</div>
         </div>
-        <div class="header-user-avatar" onclick="switchTab('account')">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User Avatar">
-          <div class="online-dot"></div>
+
+        <div class="header-right">
+          <!-- Google Translate Style Language Switcher -->
+          <button class="google-translate-btn" onclick="toggleLanguage()" title="Change Language / भाषा बदलें">
+            <span class="translate-icon"><i class="fa-solid fa-language"></i></span>
+            <span id="currentLangTag">हिन्दी</span>
+            <span class="lang-indicator" id="currentLangIndicator">HI</span>
+          </button>
+
+          <!-- Profile Avatar -->
+          <div class="header-user-avatar" onclick="switchTab('account')">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User Avatar">
+            <div class="online-dot"></div>
+          </div>
         </div>
       </header>
 
@@ -86,7 +67,7 @@
           <!-- Active Booking Banner (Page 1 Mockup) -->
           <div class="active-booking-section">
             <div class="section-title">
-              <span data-i18n="activeBookingTitle">Active Booking (सक्रिय बुकिंग)</span>
+              <span data-i18n="activeBookingTitle">Active Booking</span>
             </div>
             <div id="activeBookingContainer">
               <!-- Rendered dynamically -->
@@ -100,7 +81,7 @@
               <span data-i18n="trustTitle">100% सत्यापन | सुरक्षित भुगतान</span>
             </div>
             <div class="trusted-partners-row">
-              <span data-i18n="trustedPartners">Trusted Partners: UPI, Razorpay, BHIM, Aadhaar</span>
+              <span data-i18n="trustedPartners">Trusted Partners: UPI, Razorpay, UIDAI</span>
               <div class="partner-chips">
                 <span class="partner-chip">UPI</span>
                 <span class="partner-chip">Razorpay</span>
@@ -200,58 +181,87 @@
 
         <!-- ================= Screen 4: My Account View ================= -->
         <section id="screen-account" class="screen-view">
-          <!-- Profile Card (Screen 4 Mockup) -->
+          <!-- Profile Card with Edit Profile Trigger -->
           <div class="account-profile-header">
-            <img class="account-avatar-large" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User">
-            <div class="account-info-box">
-              <h3 id="accountUserName">Ramesh Kumar (रमेश)</h3>
-              <p style="font-size:12px; color:#64748b; margin-top:2px;">+91 98765 43210</p>
-              <div style="margin-top:6px;">
-                <span class="verified-badge-pill" style="background:#ecfdf5; color:#059669; border-color:#059669;">
-                  <i class="fa-solid fa-circle-check"></i> <span data-i18n="accountVerified">Verified Profile</span>
-                </span>
+            <div class="profile-main-info">
+              <img class="account-avatar-large" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face" alt="User">
+              <div class="account-info-box">
+                <h3 id="accountUserName">Ramesh Kumar</h3>
+                <p id="accountUserPhone" style="font-size:12px; color:#64748b; margin-top:2px;">+91 98765 43210</p>
+                <div style="margin-top:6px;">
+                  <span class="verified-badge-pill" style="background:#ecfdf5; color:#059669; border-color:#059669;">
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n="accountVerified">Verified Profile</span>
+                  </span>
+                </div>
               </div>
+            </div>
+            <button class="btn-edit-profile-trigger" onclick="openEditProfileModal()">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span data-i18n="editProfileBtn">Edit Profile</span>
+            </button>
+          </div>
+
+          <!-- Read-Only & Protected Profile Details Card -->
+          <div class="account-details-card">
+            <div style="font-size:13px; font-weight:800; margin-bottom:10px; color:#334155;" data-i18n="profileDetailsTitle">
+              Account &amp; Profile Details
+            </div>
+            <div id="accountDetailsGrid" class="details-grid">
+              <!-- Rendered dynamically -->
             </div>
           </div>
 
-          <!-- Menu Options (Screen 4 Mockup) -->
+          <!-- Menu Options -->
           <div class="account-menu-list">
             <div class="account-menu-item" onclick="toggleLanguage()">
               <div class="account-item-left">
-                <i class="fa-solid fa-globe"></i>
-                <span data-i18n="menuLanguage">Language (भाषा)</span>
+                <i class="fa-solid fa-language" style="color:#2563eb;"></i>
+                <span data-i18n="menuLanguage">Language Selection</span>
               </div>
-              <span style="font-size:12px; color:var(--primary); font-weight:700;" id="currentLangLabel">हिंदी / English &gt;</span>
+              <span style="font-size:12px; color:var(--primary); font-weight:800;" id="menuLangIndicator">हिन्दी / English &gt;</span>
+            </div>
+            <div class="account-menu-item" onclick="openDatabaseModal()">
+              <div class="account-item-left">
+                <i class="fa-solid fa-database" style="color:#0d9488;"></i>
+                <span data-i18n="menuDatabase">Database &amp; Cloud Sync (Firebase)</span>
+              </div>
+              <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
             <div class="account-menu-item" onclick="openInsuranceModal()">
               <div class="account-item-left">
-                <i class="fa-solid fa-heart-pulse"></i>
+                <i class="fa-solid fa-heart-pulse" style="color:#e11d48;"></i>
                 <span data-i18n="menuInsurance">Micro-Insurance Enrollment</span>
               </div>
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
             <div class="account-menu-item" onclick="openWorkerOnboardModal()">
               <div class="account-item-left">
-                <i class="fa-solid fa-helmet-safety"></i>
+                <i class="fa-solid fa-helmet-safety" style="color:#f59e0b;"></i>
                 <span data-i18n="menuWorkerOnboard">Register as Worker Partner (KYC)</span>
               </div>
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
             <div class="account-menu-item" onclick="openSupportModal()">
               <div class="account-item-left">
-                <i class="fa-solid fa-headset"></i>
-                <span data-i18n="menuSupport">24/7 Support (Call / Chat)</span>
+                <i class="fa-solid fa-headset" style="color:#8b5cf6;"></i>
+                <span data-i18n="menuSupport">24/7 Support (Call / WhatsApp)</span>
               </div>
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
-            <div class="account-menu-item" onclick="showToast('Security & biometric authentication is enabled.')">
+            <div class="account-menu-item" onclick="showToast('Security & biometric PIN authentication is enabled.')">
               <div class="account-item-left">
-                <i class="fa-solid fa-lock"></i>
-                <span data-i18n="menuSecurity">Security & Privacy</span>
+                <i class="fa-solid fa-lock" style="color:#475569;"></i>
+                <span data-i18n="menuSecurity">Security &amp; Privacy</span>
               </div>
               <i class="fa-solid fa-chevron-right" style="font-size:11px; color:#94a3b8;"></i>
             </div>
           </div>
+
+          <!-- Prominent Logout Button -->
+          <button class="btn-logout-main" onclick="openLogoutModal()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span data-i18n="btnLogout">Log Out</span>
+          </button>
         </section>
 
       </main>
@@ -270,7 +280,7 @@
         </button>
         <button id="nav-orders" class="nav-item-btn" onclick="switchTab('orders')">
           <i class="fa-solid fa-bag-shopping"></i>
-          <span data-i18n="navOrders">Order</span>
+          <span data-i18n="navOrders">My Bookings</span>
         </button>
         <button id="nav-payments" class="nav-item-btn" onclick="switchTab('payments')">
           <i class="fa-solid fa-credit-card"></i>
@@ -278,7 +288,7 @@
         </button>
         <button id="nav-account" class="nav-item-btn" onclick="switchTab('account')">
           <i class="fa-solid fa-circle-user"></i>
-          <span data-i18n="navAccount">Account</span>
+          <span data-i18n="navAccount">My Account</span>
         </button>
       </nav>
     </div>
@@ -290,7 +300,7 @@
   <div id="modalBooking" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3>Book Blue-Collar Labour</h3>
+        <h3 id="modalBookingTitle">Book Blue-Collar Labour</h3>
         <button class="btn-close-modal" onclick="closeModal('modalBooking')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
@@ -340,7 +350,148 @@
     </div>
   </div>
 
-  <!-- Modal 2: Live GPS Tracking & Route Map -->
+  <!-- Modal 2: Edit Profile (Editable + Locked Details) -->
+  <div id="modalEditProfile" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Edit Profile Details</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalEditProfile')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="submitProfileEdit(event)">
+          <!-- Editable Fields -->
+          <div class="form-group">
+            <label class="form-label">Full Name (पूरा नाम) *</label>
+            <input type="text" id="editProfileName" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mobile Number (मोबाइल नंबर) *</label>
+            <input type="tel" id="editProfilePhone" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address (ईमेल)</label>
+            <input type="email" id="editProfileEmail" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Delivery / House Address (पता) *</label>
+            <input type="text" id="editProfileAddress" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">City &amp; State (शहर व राज्य) *</label>
+            <input type="text" id="editProfileCity" class="form-input" required />
+          </div>
+
+          <!-- Non-Editable / Locked Fields -->
+          <div style="border-top:1px dashed #cbd5e1; margin:16px 0; padding-top:12px;">
+            <div style="font-size:11px; font-weight:700; color:#64748b; margin-bottom:10px; text-transform:uppercase;">
+              Security Protected Fields (सुरक्षित विवरण)
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Member ID</span>
+                <span class="badge-locked"><i class="fa-solid fa-lock"></i> Locked</span>
+              </label>
+              <input type="text" id="editProfileMemberId" class="form-input" readonly />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <span>Aadhaar KYC Verification</span>
+                <span class="badge-locked"><i class="fa-solid fa-lock"></i> Verified UIDAI</span>
+              </label>
+              <input type="text" id="editProfileAadhaar" class="form-input" readonly />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Save Profile Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Database & Cloud Sync (Firebase) -->
+  <div id="modalDatabase" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Database &amp; Cloud Settings</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalDatabase')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div id="dbSyncStatusInfo">Loading database status...</div>
+        </div>
+
+        <div style="margin-bottom:16px; font-size:13px; color:#475569; line-height:1.5;">
+          Your application supports both <strong>local SQLite storage</strong> (for offline/fast speed) and <strong>Firebase Cloud Firestore</strong> sync.
+        </div>
+
+        <button class="btn-submit-primary" style="background:#0d9488; margin-bottom:10px;" onclick="triggerDatabaseSync()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Sync Records to Firebase Firestore
+        </button>
+
+        <button class="btn-submit-primary" style="background:#64748b;" onclick="closeModal('modalDatabase')">
+          Close Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Logout Confirmation Modal -->
+  <div id="modalLogoutConfirm" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 style="color:#b91c1c;"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Log Out</h3>
+        <button class="btn-close-modal" onclick="closeModal('modalLogoutConfirm')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:14px; color:#334155; margin-bottom:20px; line-height:1.5;">
+          Are you sure you want to log out of your WorkMate account?
+          <span style="display:block; font-size:12px; color:#64748b; margin-top:4px;">
+            (क्या आप वाकई वर्कमेट खाते से लॉगआउट करना चाहते हैं?)
+          </span>
+        </p>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-submit-primary" style="flex:1; background:#ef4444;" onclick="executeLogout()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Yes, Log Out
+          </button>
+          <button class="btn-submit-primary" style="flex:1; background:#94a3b8;" onclick="closeModal('modalLogoutConfirm')">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Login / Re-Authentication Modal -->
+  <div id="modalLogin" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>Sign In to WorkMate</h3>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="width:60px; height:60px; background:#eff6ff; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:#1a56db; font-size:24px;">
+          <i class="fa-solid fa-users-gear"></i>
+        </div>
+        <h4>WorkMate (वर्कमेट)</h4>
+        <p style="font-size:13px; color:#64748b; margin-bottom:20px;">
+          Your Trusted Blue-Collar Labour Platform
+        </p>
+
+        <button class="btn-submit-primary" onclick="executeLogin()">
+          <i class="fa-solid fa-user-check"></i> Continue as Ramesh Kumar (+91 98765 43210)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Live GPS Tracking & Route Map -->
   <div id="modalTracking" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -357,7 +508,7 @@
             </div>
             <div style="text-align:right;">
               <span style="font-size:11px; color:#64748b;">Arrival OTP:</span>
-              <div id="trackingOtpCode" style="font-size:16px; font-weight:800; color:#1e40af;">4567</div>
+              <div id="trackingOtpCode" style="font-size:16px; font-weight:800; color:#1e40af;">5603</div>
             </div>
           </div>
           <div style="margin-top:8px; font-size:12px; color:#1e3a8a; font-weight:600; display:flex; align-items:center; gap:6px;">
@@ -368,7 +519,7 @@
           <button class="btn-submit-primary" style="flex:1; background:#10b981;" onclick="showToast('Calling worker: +91 98234 11092...')">
             <i class="fa-solid fa-phone"></i> Call Worker
           </button>
-          <button class="btn-submit-primary" style="flex:1; background:#ef4444;" onclick="closeModal('modalTracking'); showToast('Booking retained');">
+          <button class="btn-submit-primary" style="flex:1; background:#ef4444;" onclick="closeModal('modalTracking');">
             Close View
           </button>
         </div>
@@ -376,7 +527,7 @@
     </div>
   </div>
 
-  <!-- Modal 3: OTP Verification & Work Completion -->
+  <!-- Modal 7: OTP Verification & Work Completion -->
   <div id="modalVerifyOtp" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -390,11 +541,11 @@
             Worker verifies OTP upon arrival at your doorstep to start work timer.
           </p>
           <div style="background:#fefce8; border:1px solid #fef08a; padding:10px; border-radius:6px; margin-bottom:14px; font-size:13px; color:#854d0e; font-weight:600;" id="verifyOtpHint">
-            Customer OTP: 4567
+            Customer OTP: 5603
           </div>
           <div class="form-group">
             <label class="form-label">Enter 4-Digit OTP</label>
-            <input type="text" id="verifyOtpInput" class="form-input" maxlength="4" placeholder="4567" required style="font-size:20px; letter-spacing:4px; text-align:center;">
+            <input type="text" id="verifyOtpInput" class="form-input" maxlength="4" placeholder="5603" required style="font-size:20px; letter-spacing:4px; text-align:center;">
           </div>
           <button type="submit" class="btn-submit-primary" style="margin-bottom:10px;">
             <i class="fa-solid fa-check"></i> Verify OTP &amp; Start Job
@@ -407,7 +558,7 @@
     </div>
   </div>
 
-  <!-- Modal 4: Add Money to Wallet -->
+  <!-- Modal 8: Add Money to Wallet -->
   <div id="modalAddMoney" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -421,9 +572,9 @@
             <input type="number" id="addMoneyAmount" class="form-input" value="2000" min="100" step="100" required>
           </div>
           <div style="display:flex; gap:8px; margin-bottom:16px;">
-            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(1000)">+₹1,000</button>
-            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(2500)">+₹2,500</button>
-            <button type="button" class="btn-toggle-view" style="color:#1e293b; border-color:#cbd5e1;" onclick="setAddAmount(5000)">+₹5,000</button>
+            <button type="button" class="btn-wallet-action" style="background:#f1f5f9; color:#1e293b; border:1px solid #cbd5e1;" onclick="setAddAmount(1000)">+₹1,000</button>
+            <button type="button" class="btn-wallet-action" style="background:#f1f5f9; color:#1e293b; border:1px solid #cbd5e1;" onclick="setAddAmount(2500)">+₹2,500</button>
+            <button type="button" class="btn-wallet-action" style="background:#f1f5f9; color:#1e293b; border:1px solid #cbd5e1;" onclick="setAddAmount(5000)">+₹5,000</button>
           </div>
           <div class="form-group">
             <label class="form-label">Payment Method (भुगतान माध्यम)</label>
@@ -441,7 +592,7 @@
     </div>
   </div>
 
-  <!-- Modal 5: Worker KYC Onboarding (Phase 1) -->
+  <!-- Modal 9: Worker KYC Onboarding -->
   <div id="modalWorkerOnboard" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -482,7 +633,7 @@
           <div class="form-group" style="display:flex; align-items:center; gap:8px;">
             <input type="checkbox" id="workerPoliceConsent" checked required>
             <label for="workerPoliceConsent" style="font-size:12px; color:#475569;">
-              I consent to police background check &amp; Aadhaar e-KYC verification (Phase 1).
+              I consent to police background check &amp; Aadhaar e-KYC verification.
             </label>
           </div>
           <button type="submit" class="btn-submit-primary">
@@ -493,7 +644,7 @@
     </div>
   </div>
 
-  <!-- Modal 6: Rating & Review -->
+  <!-- Modal 10: Rating & Review -->
   <div id="modalReview" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -527,7 +678,7 @@
     </div>
   </div>
 
-  <!-- Modal 7: Micro-Insurance Info -->
+  <!-- Modal 11: Micro-Insurance Info -->
   <div id="modalInsurance" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -553,7 +704,7 @@
     </div>
   </div>
 
-  <!-- Modal 8: 24/7 Support -->
+  <!-- Modal 12: 24/7 Support -->
   <div id="modalSupport" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -593,10 +744,11 @@
     }
 
     function openPayoutModal() {
-      const amt = prompt("Enter payout withdrawal amount (₹):", "5000");
+      const isHi = state.lang === "hi";
+      const amt = prompt(isHi ? "निकासी राशि दर्ज करें (₹):" : "Enter payout withdrawal amount (₹):", "5000");
       if (amt && !isNaN(amt)) {
         handlePayout(amt).then(() => {
-          showToast(`Payout of ₹${amt} initiated via UPI!`, "success");
+          showToast(isHi ? `₹${amt} का पेआउट यूपीआई पर भेजा गया!` : `Payout of ₹${amt} initiated via UPI!`, "success");
           loadInitialData();
         }).catch(e => showToast(e.message, "error"));
       }
@@ -608,6 +760,10 @@
 
     function openSupportModal() {
       document.getElementById("modalSupport").classList.add("active");
+    }
+
+    function openWorkerOnboardModal() {
+      document.getElementById("modalWorkerOnboard").classList.add("active");
     }
   </script>
 </body>

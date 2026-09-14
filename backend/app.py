@@ -14,7 +14,7 @@ from .models import (
     Category, Service, Worker, Booking, BookingCreate,
     OTPVerifyRequest, BookingStatusUpdateRequest,
     WalletTransaction, WalletDepositRequest, WalletPayoutRequest,
-    WorkerOnboardRequest, ReviewCreate, Review
+    WorkerOnboardRequest, ReviewCreate, Review, UserProfileUpdate
 )
 from .database import (
     init_db, get_categories, get_services, get_service_by_id,
@@ -22,7 +22,8 @@ from .database import (
     get_bookings, get_booking_by_id, create_booking,
     update_booking_status, verify_booking_otp,
     get_wallet, deposit_wallet, payout_wallet,
-    get_transactions, get_reviews, create_review
+    get_transactions, get_reviews, create_review,
+    get_user_profile, update_user_profile
 )
 
 # Initialize database schema and seeds
@@ -288,6 +289,27 @@ def submit_review(payload: ReviewCreate):
         "success": True,
         "message": "Thank you for your rating! Feedback recorded.",
         "data": result
+    }
+
+# ----------------- User Profile Management ----------------- #
+
+@app.get("/api/user/profile")
+def view_profile():
+    return get_user_profile()
+
+@app.put("/api/user/profile")
+def edit_profile(payload: UserProfileUpdate):
+    updated = update_user_profile(
+        name=payload.name,
+        phone=payload.phone,
+        address=payload.address,
+        city=payload.city,
+        email=payload.email
+    )
+    return {
+        "success": True,
+        "message": "Profile updated successfully!",
+        "profile": updated
     }
 
 # ----------------- Static Web Client Mount ----------------- #

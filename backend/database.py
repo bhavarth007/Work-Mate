@@ -161,6 +161,37 @@ def init_db():
             )
         """)
 
+        # Users Profile (Editable vs Read-Only Fields)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                email TEXT,
+                address TEXT NOT NULL,
+                city TEXT NOT NULL,
+                photo TEXT,
+                aadhaar_masked TEXT DEFAULT '•••• •••• 9012',
+                member_id TEXT DEFAULT 'WM-USER-89104',
+                account_type TEXT DEFAULT 'Customer Premium',
+                joined_date TEXT DEFAULT 'January 15, 2026',
+                trust_score REAL DEFAULT 4.9,
+                kyc_status TEXT DEFAULT 'verified'
+            )
+        """)
+
+        cursor.execute("""
+            INSERT OR IGNORE INTO users (
+                id, name, phone, email, address, city, photo,
+                aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status
+            ) VALUES (
+                'u-1', 'Ramesh Kumar', '+91 98765 43210', 'ramesh.kumar@workmate.in',
+                'Flat 402, Lotus Tower, Sector 14', 'Noida, Uttar Pradesh',
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+                '•••• •••• 9012', 'WM-USER-89104', 'Customer Premium', 'January 15, 2026', 4.9, 'verified'
+            )
+        """)
+
         conn.commit()
 
         # Check if seeder is needed
@@ -582,3 +613,38 @@ def create_review(data: Dict[str, Any]) -> Dict[str, Any]:
         conn.commit()
         conn.close()
         return {"id": rev_id, "success": True}
+
+def get_user_profile() -> Dict[str, Any]:
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM users WHERE id = 'u-1'").fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return {
+        "id": "u-1",
+        "name": "Ramesh Kumar",
+        "phone": "+91 98765 43210",
+        "email": "ramesh.kumar@workmate.in",
+        "address": "Flat 402, Lotus Tower, Sector 14",
+        "city": "Noida, Uttar Pradesh",
+        "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
+        "aadhaar_masked": "•••• •••• 9012",
+        "member_id": "WM-USER-89104",
+        "account_type": "Customer Premium",
+        "joined_date": "January 15, 2026",
+        "trust_score": 4.9,
+        "kyc_status": "verified"
+    }
+
+def update_user_profile(name: str, phone: str, address: str, city: str, email: Optional[str] = None) -> Dict[str, Any]:
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE users
+            SET name = ?, phone = ?, address = ?, city = ?, email = COALESCE(?, email)
+            WHERE id = 'u-1'
+        """, (name, phone, address, city, email))
+        conn.commit()
+        conn.close()
+        return get_user_profile()
