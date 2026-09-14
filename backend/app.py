@@ -15,7 +15,7 @@ from .models import (
     OTPVerifyRequest, BookingStatusUpdateRequest,
     WalletTransaction, WalletDepositRequest, WalletPayoutRequest,
     WorkerOnboardRequest, ReviewCreate, Review, UserProfileUpdate,
-    AuthLoginRequest, ServiceRateUpdate
+    AuthLoginRequest, ServiceRateUpdate, UserAvatarUpdate
 )
 from .database import (
     init_db, get_categories, get_services, get_service_by_id,
@@ -24,7 +24,7 @@ from .database import (
     update_booking_status, verify_booking_otp,
     get_wallet, deposit_wallet, payout_wallet,
     get_transactions, get_reviews, create_review,
-    get_user_profile, update_user_profile,
+    get_user_profile, update_user_profile, update_user_avatar,
     update_service_rate, get_admin_banks, switch_primary_bank,
     get_admin_financial_stats, get_system_config, set_platform_charge_percent
 )
@@ -309,11 +309,23 @@ def edit_profile(payload: UserProfileUpdate, user_id: Optional[str] = None):
         address=payload.address,
         city=payload.city,
         email=payload.email,
+        photo=payload.photo,
+        joined_date=payload.joined_date,
         user_id=uid
     )
     return {
         "success": True,
         "message": "Profile updated successfully!",
+        "profile": updated
+    }
+
+@app.post("/api/user/avatar")
+def change_avatar(payload: UserAvatarUpdate, user_id: Optional[str] = None):
+    uid = user_id or "u-1"
+    updated = update_user_avatar(photo=payload.photo, user_id=uid)
+    return {
+        "success": True,
+        "message": "Profile image updated successfully!",
         "profile": updated
     }
 

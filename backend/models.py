@@ -161,6 +161,11 @@ class UserProfileUpdate(BaseModel):
     address: Optional[str] = ""
     city: Optional[str] = ""
     email: Optional[str] = None
+    photo: Optional[str] = None
+    joined_date: Optional[str] = None
+
+class UserAvatarUpdate(BaseModel):
+    photo: str
 
 class AuthLoginRequest(BaseModel):
     role: Literal["customer", "admin"] = "customer"

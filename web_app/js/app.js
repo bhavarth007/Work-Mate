@@ -28,7 +28,7 @@ const state = {
     aadhaar_masked: "•••• •••• 9012",
     member_id: "WM-USER-89104",
     account_type: "Customer Premium",
-    joined_date: "January 15, 2026",
+    joined_date: "September 14, 2026",
     trust_score: 4.9,
     kyc_status: "verified"
   },
@@ -787,6 +787,7 @@ function renderProfile() {
   const isHi = state.lang === "hi";
   const dict = I18N[state.lang];
   const isAdmin = state.session && state.session.role === "admin";
+  const todayFormatted = isHi ? "14 सितंबर 2026" : "September 14, 2026";
 
   // Dedicated admin profile vs customer profile
   let p = state.userProfile;
@@ -802,7 +803,7 @@ function renderProfile() {
         photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
         member_id: "WM-ADMIN-001",
         account_type: isHi ? "सिस्टम प्रशासक (Admin)" : "System Administrator",
-        joined_date: isHi ? "जनवरी 2026" : "January 2026",
+        joined_date: todayFormatted,
         trust_score: 5.0,
         kyc_status: "verified"
       };
@@ -818,7 +819,7 @@ function renderProfile() {
         aadhaar_masked: "•••• •••• 9012",
         member_id: "WM-USER-89104",
         account_type: "Customer Premium",
-        joined_date: "January 15, 2026",
+        joined_date: todayFormatted,
         trust_score: 4.9,
         kyc_status: "verified"
       };
@@ -830,14 +831,24 @@ function renderProfile() {
   if (nameEl) nameEl.textContent = p.name || (isAdmin ? "admin" : "Ramesh Kumar");
   if (phoneEl) phoneEl.textContent = p.phone || (isAdmin ? "7878193644" : "+91 98765 43210");
 
-  const avatarImg = document.querySelector(".profile-avatar-large img");
-  if (avatarImg && p.photo) {
-    avatarImg.src = p.photo;
+  const accountAvatar = document.getElementById("accountProfileAvatarImg");
+  if (accountAvatar && p.photo) {
+    accountAvatar.src = p.photo;
+  }
+  const headerAvatar = document.querySelector(".header-user-avatar img");
+  if (headerAvatar && p.photo) {
+    headerAvatar.src = p.photo;
+  }
+  const editPreview = document.getElementById("editProfilePhotoPreview");
+  if (editPreview && p.photo) {
+    editPreview.src = p.photo;
   }
 
   const grid = document.getElementById("accountDetailsGrid");
   if (grid) {
     const fullAddress = [p.address, p.city].filter(Boolean).join(", ");
+    const userJoinedDate = p.joined_date || todayFormatted;
+
     if (isAdmin) {
       grid.innerHTML = `
         <div class="detail-pill">
@@ -858,7 +869,7 @@ function renderProfile() {
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
-          <div class="detail-value">${p.joined_date || (isHi ? 'जनवरी 2026' : 'January 2026')}</div>
+          <div class="detail-value">${userJoinedDate}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
           <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? 'पता एवं स्थान' : 'Address & City/State'}</div>
@@ -883,7 +894,7 @@ function renderProfile() {
         </div>
         <div class="detail-pill">
           <div class="detail-label"><i class="fa-solid fa-calendar-check"></i> ${dict.joinedLabel}</div>
-          <div class="detail-value">${p.joined_date || "January 15, 2026"}</div>
+          <div class="detail-value">${userJoinedDate}</div>
         </div>
         <div class="detail-pill" style="grid-column: span 2;">
           <div class="detail-label"><i class="fa-solid fa-location-dot"></i> ${isHi ? "पंजीकृत सेवा का पता" : "Registered Service Address"}</div>
@@ -896,27 +907,143 @@ function renderProfile() {
   }
 }
 
+// ----------------- Profile View & Change Avatar ----------------- //
+
+function openAvatarViewModal() {
+  const isHi = state.lang === "hi";
+  const isAdmin = state.session && state.session.role === "admin";
+  const todayFormatted = isHi ? "14 सितंबर 2026" : "September 14, 2026";
+  const p = state.userProfile || (isAdmin ? {
+    name: "admin",
+    account_type: "System Administrator",
+    joined_date: todayFormatted,
+    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+  } : {
+    name: "Ramesh Kumar",
+    account_type: "Customer Premium",
+    joined_date: todayFormatted,
+    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+  });
+
+  const img = document.getElementById("viewAvatarModalImg");
+  const name = document.getElementById("viewAvatarModalName");
+  const role = document.getElementById("viewAvatarModalRole");
+  const joined = document.getElementById("viewAvatarModalJoined");
+
+  const fallbackPhoto = isAdmin 
+    ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
+    : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face";
+
+  if (img) img.src = p.photo || fallbackPhoto;
+  if (name) name.textContent = p.name || (isAdmin ? "admin" : "Ramesh Kumar");
+  if (role) role.textContent = isHi ? (isAdmin ? "सिस्टम प्रशासक" : "प्रीमियम ग्राहक") : (p.account_type || (isAdmin ? "System Administrator" : "Customer Premium"));
+  if (joined) joined.textContent = (isHi ? "सदस्यता तिथि: " : "Member Since: ") + (p.joined_date || todayFormatted);
+
+  document.getElementById("modalViewAvatar").classList.add("active");
+}
+
+function triggerAvatarUpload(event) {
+  if (event) event.stopPropagation();
+  const fileInput = document.getElementById("avatarFileInput");
+  if (fileInput) {
+    fileInput.value = "";
+    fileInput.click();
+  }
+}
+
+async function handleAvatarFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("Please select a valid image file (PNG, JPG, WebP)", "error");
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    showToast("Image size should be less than 5MB", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const base64Data = e.target.result;
+    await saveNewProfileAvatar(base64Data);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveNewProfileAvatar(photoDataUrl) {
+  const isHi = state.lang === "hi";
+  const isAdmin = state.session && state.session.role === "admin";
+  const currentUid = (state.session && state.session.user && state.session.user.id)
+    ? state.session.user.id
+    : (isAdmin ? "admin-1" : "u-1");
+
+  try {
+    const res = await fetch(`/api/user/avatar?user_id=${encodeURIComponent(currentUid)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photo: photoDataUrl })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Failed to update profile photo");
+
+    state.userProfile = data.profile;
+    if (state.session) {
+      state.session.user = { ...(state.session.user || {}), ...data.profile };
+      localStorage.setItem("workmate_session", JSON.stringify(state.session));
+    }
+
+    // Update DOM images immediately
+    const accountAvatar = document.getElementById("accountProfileAvatarImg");
+    if (accountAvatar) accountAvatar.src = photoDataUrl;
+    const headerAvatar = document.querySelector(".header-user-avatar img");
+    if (headerAvatar) headerAvatar.src = photoDataUrl;
+    const lightboxImg = document.getElementById("viewAvatarModalImg");
+    if (lightboxImg) lightboxImg.src = photoDataUrl;
+    const previewImg = document.getElementById("editProfilePhotoPreview");
+    if (previewImg) previewImg.src = photoDataUrl;
+
+    showToast(isHi ? "प्रोफाइल फोटो सफलतापूर्वक अपडेट हो गई!" : "Profile photo updated successfully!", "success");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
 // ----------------- Profile Edit ----------------- //
 
 function openEditProfileModal() {
   const isAdmin = state.session && state.session.role === "admin";
+  const isHi = state.lang === "hi";
+  const todayFormatted = isHi ? "14 सितंबर 2026" : "September 14, 2026";
   const p = state.userProfile || (isAdmin ? {
     name: "admin",
     phone: "7878193644",
     email: "bhavarthhapani7@gmail.com",
     address: "",
     city: "",
+    photo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face",
     member_id: "WM-ADMIN-001",
-    aadhaar_masked: ""
+    aadhaar_masked: "",
+    joined_date: todayFormatted
   } : {
     name: "Ramesh Kumar",
     phone: "+91 98765 43210",
     email: "ramesh.kumar@workmate.in",
     address: "Flat 402, Lotus Tower, Sector 14",
     city: "Noida, Uttar Pradesh",
+    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
     member_id: "WM-USER-89104",
-    aadhaar_masked: "•••• •••• 9012"
+    aadhaar_masked: "•••• •••• 9012",
+    joined_date: todayFormatted
   });
+
+  const preview = document.getElementById("editProfilePhotoPreview");
+  if (preview) {
+    preview.src = p.photo || (isAdmin ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face");
+  }
 
   document.getElementById("editProfileName").value = p.name || (isAdmin ? "admin" : "Ramesh Kumar");
   document.getElementById("editProfilePhone").value = p.phone || (isAdmin ? "7878193644" : "+91 98765 43210");

@@ -174,7 +174,7 @@ def init_db():
                 aadhaar_masked TEXT DEFAULT '•••• •••• 9012',
                 member_id TEXT DEFAULT 'WM-USER-89104',
                 account_type TEXT DEFAULT 'Customer Premium',
-                joined_date TEXT DEFAULT 'January 15, 2026',
+                joined_date TEXT DEFAULT 'September 14, 2026',
                 trust_score REAL DEFAULT 4.9,
                 kyc_status TEXT DEFAULT 'verified'
             )
@@ -188,7 +188,7 @@ def init_db():
                 'u-1', 'Ramesh Kumar', '+91 98765 43210', 'ramesh.kumar@workmate.in',
                 'Flat 402, Lotus Tower, Sector 14', 'Noida, Uttar Pradesh',
                 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
-                '•••• •••• 9012', 'WM-USER-89104', 'Customer Premium', 'January 15, 2026', 4.9, 'verified'
+                '•••• •••• 9012', 'WM-USER-89104', 'Customer Premium', 'September 14, 2026', 4.9, 'verified'
             )
         """)
 
@@ -201,8 +201,15 @@ def init_db():
                 'admin-1', 'admin', '7878193644', 'bhavarthhapani7@gmail.com',
                 '', '',
                 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
-                '', 'WM-ADMIN-001', 'System Administrator', 'January 2026', 5.0, 'verified'
+                '', 'WM-ADMIN-001', 'System Administrator', 'September 14, 2026', 5.0, 'verified'
             )
+        """)
+
+        # Sync joined_date for active accounts to accurate launch date
+        cursor.execute("""
+            UPDATE users
+            SET joined_date = 'September 14, 2026'
+            WHERE joined_date LIKE '%January%' OR joined_date IS NULL OR joined_date = ''
         """)
 
         # System Configuration Table (e.g. Configurable Platform Charge % - Default 10%)
@@ -684,7 +691,7 @@ def get_user_profile(user_id: Optional[str] = None) -> Dict[str, Any]:
             "aadhaar_masked": "",
             "member_id": "WM-ADMIN-001",
             "account_type": "System Administrator",
-            "joined_date": "January 2026",
+            "joined_date": "September 14, 2026",
             "trust_score": 5.0,
             "kyc_status": "verified"
         }
@@ -699,12 +706,21 @@ def get_user_profile(user_id: Optional[str] = None) -> Dict[str, Any]:
         "aadhaar_masked": "•••• •••• 9012",
         "member_id": "WM-USER-89104",
         "account_type": "Customer Premium",
-        "joined_date": "January 15, 2026",
+        "joined_date": "September 14, 2026",
         "trust_score": 4.9,
         "kyc_status": "verified"
     }
 
-def update_user_profile(name: str, phone: str, address: str, city: str, email: Optional[str] = None, user_id: str = "u-1") -> Dict[str, Any]:
+def update_user_profile(
+    name: str,
+    phone: str,
+    address: str,
+    city: str,
+    email: Optional[str] = None,
+    photo: Optional[str] = None,
+    joined_date: Optional[str] = None,
+    user_id: str = "u-1"
+) -> Dict[str, Any]:
     uid = user_id or "u-1"
     with _lock:
         conn = get_connection()
@@ -714,19 +730,35 @@ def update_user_profile(name: str, phone: str, address: str, city: str, email: O
         if exists:
             cursor.execute("""
                 UPDATE users
-                SET name = ?, phone = ?, address = ?, city = ?, email = COALESCE(?, email)
+                SET name = ?,
+                    phone = ?,
+                    address = ?,
+                    city = ?,
+                    email = COALESCE(?, email),
+                    photo = COALESCE(?, photo),
+                    joined_date = COALESCE(?, joined_date)
                 WHERE id = ?
-            """, (name, phone, address or "", city or "", email, uid))
+            """, (name, phone, address or "", city or "", email, photo, joined_date, uid))
         else:
             is_admin = uid in ["admin-1", "admin"]
-            photo = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" if is_admin else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+            def_photo = photo or ("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" if is_admin else "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face")
             member_id = "WM-ADMIN-001" if is_admin else "WM-USER-89104"
             acc_type = "System Administrator" if is_admin else "Customer Premium"
-            joined = "January 2026" if is_admin else "January 15, 2026"
+            joined = joined_date or "September 14, 2026"
             cursor.execute("""
                 INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, 5.0, 'verified')
-            """, (uid, name, phone, email or "", address or "", city or "", photo, member_id, acc_type, joined))
+            """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, acc_type, joined))
+        conn.commit()
+        conn.close()
+        return get_user_profile(uid)
+
+def update_user_avatar(photo: str, user_id: str = "u-1") -> Dict[str, Any]:
+    uid = user_id or "u-1"
+    with _lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET photo = ? WHERE id = ?", (photo, uid))
         conn.commit()
         conn.close()
         return get_user_profile(uid)

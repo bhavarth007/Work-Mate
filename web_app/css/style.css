@@ -1060,12 +1060,91 @@ body {
   gap: 14px;
 }
 
+.account-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.account-avatar-wrapper:hover .account-avatar-large {
+  border-color: #2563eb;
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+}
+
 .account-avatar-large {
-  width: 58px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   border-radius: var(--radius-full);
   object-fit: cover;
   border: 3px solid var(--primary);
+  display: block;
+  transition: all 0.25s ease;
+}
+
+.btn-avatar-camera-overlay {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-avatar-camera-overlay:hover {
+  background: #1d4ed8;
+  transform: scale(1.15);
+}
+
+.btn-view-avatar-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-view-avatar-pill:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.btn-secondary-action {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary-action:hover {
+  background: #e2e8f0;
 }
 
 .account-info-box h3 {
