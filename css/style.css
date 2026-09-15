@@ -192,17 +192,27 @@ body {
 }
 
 .auth-logo-badge {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #1e40af, #1a56db);
-  border-radius: 18px;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-size: 28px;
-  margin: 0 auto 12px;
-  box-shadow: 0 10px 20px rgba(26, 86, 219, 0.3);
+  background: transparent;
+  box-shadow: none;
+}
+
+.auth-logo-img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.22);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-logo-img:hover {
+  transform: scale(1.06);
 }
 
 .auth-tabs-row {
@@ -2734,3 +2744,40 @@ body {
   color: #ffffff;
   border-color: #1d4ed8;
 }
+
+/* Branded Footer in Account View */
+.account-brand-footer {
+  text-align: center;
+  margin: 28px 0 16px;
+  opacity: 0.95;
+}
+.account-brand-footer img {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  margin-bottom: 6px;
+}
+.account-brand-footer .brand-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.account-brand-footer .version-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.account-brand-footer .brand-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
