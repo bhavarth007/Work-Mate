@@ -277,13 +277,19 @@
           <div class="admin-section-header" style="margin-top:28px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;">
             <div style="text-align:left;">
               <span class="admin-section-tag" style="background:#ede9fe; color:#6d28d9;"><i class="fa-solid fa-users-gear"></i> User Accounts</span>
-              <h3 style="font-size:16px; font-weight:800; color:#0f172a; margin-top:5px; text-align:left;">
+              <h3 style="font-size:16px; font-weight:800; color:#0f172a; margin-top:5px; text-align:left; display:flex; align-items:center; gap:8px;">
                 <span data-i18n="adminUsersHeader">User Management &amp; Access Control</span>
+                <span id="adminUserCountBadge" style="font-size:11px; font-weight:700; background:#ede9fe; color:#6d28d9; padding:2px 8px; border-radius:10px;">21 Accounts</span>
               </h3>
             </div>
-            <button type="button" class="btn-add-admin-user" onclick="openAdminUserModal(null)">
-              <i class="fa-solid fa-user-plus"></i> <span data-i18n="btnAddUser">Add New User</span>
-            </button>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="btn-add-admin-user" onclick="openAdminUserModal(null)">
+                <i class="fa-solid fa-user-plus"></i> <span data-i18n="btnAddUser">Add New User</span>
+              </button>
+              <button type="button" class="btn-add-admin-user" onclick="triggerResetDefaultUsers()" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1;" title="Reload 20+ Realistic Seed Accounts">
+                <i class="fa-solid fa-arrows-rotate"></i> <span>Reset 20 Default Users</span>
+              </button>
+            </div>
           </div>
 
           <!-- Users Dynamic Container -->

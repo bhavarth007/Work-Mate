@@ -467,32 +467,87 @@
     try {
       const stored = localStorage.getItem("workmate_client_db");
       if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && parsed.schemaVersion >= 4 && parsed.services && parsed.services.length >= 20) {
-          return parsed;
-        }
-        // Upgrade existing local storage with all 20 services and schema
-        parsed.schemaVersion = 5;
-        parsed.users = DEFAULT_DB.users;
-        parsed.categories = DEFAULT_DB.categories;
-        parsed.services = DEFAULT_DB.services;
-        parsed.workers = DEFAULT_DB.workers;
-        if (parsed.users) {
+        let parsed = JSON.parse(stored);
+        const currentUserCount = (parsed && parsed.users && Array.isArray(parsed.users)) ? parsed.users.length : 0;
+        
+        // Auto-migrate if fewer than 20 users or old schemaVersion (< 20)
+        if (!parsed.schemaVersion || parsed.schemaVersion < 20 || currentUserCount < 20) {
+          console.log("[WorkMate] Upgrading client database to schemaVersion 20 with 21 realistic default users...");
+          parsed.schemaVersion = 20;
+
+          // Merge default users preserving any user custom modifications
+          const existingIds = new Set((parsed.users || []).map(u => String(u.id)));
+          const existingPhones = new Set((parsed.users || []).map(u => cleanPhone(u.phone)));
+          const mergedUsers = [...(parsed.users || [])];
+
+          DEFAULT_DB.users.forEach(defU => {
+            const defPhone = cleanPhone(defU.phone);
+            if (!existingIds.has(String(defU.id)) && !existingPhones.has(defPhone)) {
+              mergedUsers.push(JSON.parse(JSON.stringify(defU)));
+            }
+          });
+
+          // If still fewer than 20 (e.g. if previous data was empty or corrupted), adopt DEFAULT_DB.users
+          if (mergedUsers.length < 20) {
+            parsed.users = JSON.parse(JSON.stringify(DEFAULT_DB.users));
+          } else {
+            parsed.users = mergedUsers;
+          }
+
+          // Ensure roles, passwords, and photos are valid
           parsed.users.forEach(u => {
             if (!u.password) u.password = (u.role === 'admin' || u.id === 'admin-1') ? 'admin123' : '123456';
-            if (!u.role) u.role = (u.id === 'admin-1' || u.phone === '7878193644') ? 'admin' : 'customer';
+            if (!u.role) u.role = (u.id === 'admin-1' || cleanPhone(u.phone) === '7878193644') ? 'admin' : 'customer';
           });
-        } else {
-          parsed.users = DEFAULT_DB.users;
+
+          parsed.categories = DEFAULT_DB.categories;
+          parsed.services = DEFAULT_DB.services;
+          parsed.workers = DEFAULT_DB.workers;
+          parsed.adminBanks = DEFAULT_DB.adminBanks;
+
+          localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
+          return parsed;
         }
-        parsed.adminBanks = DEFAULT_DB.adminBanks;
-        localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
+
         return parsed;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("[WorkMate] Error reading stored client db:", e);
+    }
+    DEFAULT_DB.schemaVersion = 20;
     localStorage.setItem("workmate_client_db", JSON.stringify(DEFAULT_DB));
     return DEFAULT_DB;
   }
+
+  // Global helper to re-seed or reset all 21 default accounts
+  window.seedWorkmateUsers = function(forceReset = false) {
+    let db;
+    try {
+      const stored = localStorage.getItem("workmate_client_db");
+      db = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_DB));
+    } catch (e) {
+      db = JSON.parse(JSON.stringify(DEFAULT_DB));
+    }
+
+    if (forceReset || !db.users || db.users.length < 20) {
+      db.users = JSON.parse(JSON.stringify(DEFAULT_DB.users));
+    } else {
+      const existingIds = new Set((db.users || []).map(u => String(u.id)));
+      const existingPhones = new Set((db.users || []).map(u => cleanPhone(u.phone)));
+      DEFAULT_DB.users.forEach(defU => {
+        const defPhone = cleanPhone(defU.phone);
+        if (!existingIds.has(String(defU.id)) && !existingPhones.has(defPhone)) {
+          db.users.push(JSON.parse(JSON.stringify(defU)));
+        }
+      });
+    }
+
+    db.schemaVersion = 20;
+    saveLocalDb(db);
+    return db.users;
+  };
+
+  window.DEFAULT_WORKMATE_USERS = DEFAULT_DB.users;
 
   function saveLocalDb(db) {
     try {
