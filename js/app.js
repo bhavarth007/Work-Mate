@@ -3088,8 +3088,23 @@ async function renderAdminUsers() {
 
   try {
     const res = await fetch("/api/admin/users");
-    const users = await res.json();
+    let users = await res.json();
+
+    // Auto-heal if cached user list in localStorage has fewer than 20 accounts
+    if (!users || !Array.isArray(users) || users.length < 20) {
+      if (typeof window.seedWorkmateUsers === "function") {
+        console.log("[WorkMate] Detected fewer than 20 accounts (" + (users ? users.length : 0) + "). Auto-seeding 20+ realistic users...");
+        users = window.seedWorkmateUsers(true);
+      }
+    }
+
     state.adminUsers = users;
+
+    // Update user counter badge in header
+    const countBadge = document.getElementById("adminUserCountBadge");
+    if (countBadge) {
+      countBadge.textContent = `${users ? users.length : 0} Accounts`;
+    }
 
     if (!users || users.length === 0) {
       container.innerHTML = `<div style="padding:16px; text-align:center; color:#64748b; font-size:12px;">${isHi ? "कोई उपयोगकर्ता खाता नहीं मिला।" : "No user accounts found."}</div>`;
@@ -3303,3 +3318,28 @@ async function adminDeleteUser(userId) {
     showToast(err.message, "error");
   }
 }
+
+async function triggerResetDefaultUsers() {
+  const isHi = state.lang === "hi";
+  const msg = isHi 
+    ? "क्या आप सभी 20+ डिफ़ॉल्ट ग्राहक, श्रमिक और ठेकेदार खातों को पुनः लोड करना चाहते हैं?" 
+    : "Reset and reload all 20+ default Customer, Worker, and Contractor accounts?";
+  if (!confirm(msg)) return;
+
+  if (typeof window.seedWorkmateUsers === "function") {
+    window.seedWorkmateUsers(true);
+  }
+  try {
+    const stored = localStorage.getItem("workmate_client_db");
+    if (stored && window.DEFAULT_WORKMATE_USERS) {
+      const parsed = JSON.parse(stored);
+      parsed.users = JSON.parse(JSON.stringify(window.DEFAULT_WORKMATE_USERS));
+      parsed.schemaVersion = 20;
+      localStorage.setItem("workmate_client_db", JSON.stringify(parsed));
+    }
+  } catch (e) {}
+
+  await renderAdminUsers();
+  showToast(isHi ? "✓ 20+ खाते सफलतापूर्वक लोड हो गए!" : "✓ 20+ realistic user accounts successfully loaded!", "success");
+}
+
