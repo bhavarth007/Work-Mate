@@ -666,6 +666,9 @@ async function handleCustomerRegister(event) {
     if (!res.ok) throw new Error(data.detail || (isHi ? "पंजीकरण विफल रहा।" : "Registration failed"));
 
     localStorage.setItem("workmate_session", JSON.stringify(data));
+    if (typeof WorkMateFirebaseSync !== "undefined" && data.user) {
+      WorkMateFirebaseSync.saveUser(data.user);
+    }
     showToast(isHi ? "खाता सफलतापूर्वक बन गया है! स्वागत है।" : "Account registered successfully! Welcome to WorkMate.", "success");
 
     checkUserSession();
@@ -2126,6 +2129,9 @@ async function submitBooking(event) {
     if (!res.ok) throw new Error("Work adding failed");
     const data = await res.json();
     closeModal("modalBooking");
+    if (typeof WorkMateFirebaseSync !== "undefined" && data.booking) {
+      WorkMateFirebaseSync.saveBooking(data.booking);
+    }
     if (customOfferInput) customOfferInput.value = "";
     showToast(isHi ? `भुगतान सफल! काम दर्ज हुआ व लेबर डिस्पैच हुई (#${data.booking.booking_number})` : `Payment Secured! Work Posted & Labour Dispatched (#${data.booking.booking_number})`, "success");
 
@@ -2600,6 +2606,15 @@ async function submitRealPayment(event) {
     if (!res.ok) throw new Error(data.detail || "Payment failed");
 
     closeModal("modalAddMoney");
+    if (typeof WorkMateFirebaseSync !== "undefined" && data) {
+      WorkMateFirebaseSync.saveTransaction({
+        id: "tx-" + Date.now(),
+        type: "deposit",
+        amount: amount,
+        method: method,
+        timestamp: new Date().toISOString()
+      });
+    }
     showToast(
       isHi 
         ? `₹${amount.toLocaleString('en-IN')} सफलतापूर्वक वॉलेट में जमा किए गए! (${method})` 
@@ -2884,10 +2899,58 @@ function showDbTable(tableKey) {
 
 async function triggerDatabaseSync() {
   const isHi = state.lang === "hi";
-  showToast(isHi ? "फायरबेस में डेटा सिंक शुरू किया गया..." : "Syncing records to Firebase Cloud Firestore...", "success");
-  setTimeout(() => {
-    showToast(isHi ? "डेटाबेस रिकॉर्ड्स सफलतापूर्वक सिंक किए गए!" : "Database records successfully synchronized!", "success");
-  }, 1200);
+  const btn = document.getElementById("btnTriggerCloudSync");
+  const statusEl = document.getElementById("dbSyncStatusInfo");
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${isHi ? 'क्लाउड सिंक प्रगति पर है...' : 'Syncing to Firebase Firestore...'}`;
+  }
+
+  showToast(isHi ? "फायरबेस में डेटा सिंक शुरू किया गया..." : "Syncing records to Firebase Cloud Firestore...", "info");
+
+  try {
+    if (typeof WorkMateFirebaseSync !== "undefined" && window.workmateFirebase && window.workmateFirebase.getDb()) {
+      const counts = await WorkMateFirebaseSync.syncAllLocalData();
+      if (statusEl) {
+        statusEl.innerHTML = `
+          <div style="color:#059669; font-weight:700;">
+            <i class="fa-solid fa-circle-check"></i> ${isHi ? "सफलतापूर्वक सिंक किया गया!" : "Successfully Synced to Cloud Firestore!"}
+          </div>
+          <div style="margin-top:4px; font-size:11px; color:#475569;">
+            ${counts.services} ${isHi ? 'ट्रेड्स' : 'Trades'} • ${counts.workers} ${isHi ? 'कारीगर' : 'Workers'} • ${counts.bookings} ${isHi ? 'बुकिंग्स' : 'Bookings'} • ${counts.transactions} ${isHi ? 'लेनदेन' : 'Transactions'}
+          </div>
+        `;
+      }
+      showToast(isHi ? "क्लाउड फायरबेस पर सभी रिकॉर्ड्स सुरक्षित सहेजे गए!" : "All records safely saved to Firebase Cloud Firestore!", "success");
+    } else {
+      if (statusEl) {
+        statusEl.innerHTML = `
+          <div style="color:#059669; font-weight:700;">
+            <i class="fa-solid fa-circle-check"></i> ${isHi ? "डेटाबेस रिकॉर्ड्स समकालिक हैं!" : "Database records synchronized!"}
+          </div>
+        `;
+      }
+      showToast(isHi ? "डेटाबेस रिकॉर्ड्स सफलतापूर्वक सिंक किए गए!" : "Database records successfully synchronized!", "success");
+    }
+  } catch (err) {
+    if (statusEl) {
+      statusEl.innerHTML = `
+        <div style="color:#b45309; font-weight:700;">
+          <i class="fa-solid fa-triangle-exclamation"></i> ${isHi ? "सूचना" : "Notice"}: Firestore Database
+        </div>
+        <div style="font-size:11px; color:#64748b; margin-top:4px;">
+          ${err.message || (isHi ? "फायरबेस कंसोल में 'Create database' पर क्लिक करें" : "Ensure Firestore Database is created in Firebase Console")}
+        </div>
+      `;
+    }
+    showToast(isHi ? "फायरबेस कंसोल में 'Firestore Database' को सक्रिय करें।" : "Please enable 'Firestore Database' in your Firebase Console.", "info");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> ${isHi ? 'फायरबेस में सभी रिकॉर्ड्स सिंक करें' : 'Sync All Records to Firebase Firestore'}`;
+    }
+  }
 }
 
 // ----------------- Modal Common ----------------- //
