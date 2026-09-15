@@ -50,15 +50,15 @@
       <!-- Unified Login Form (Customer & Admin Login through single portal) -->
       <form id="formCustomerLogin" onsubmit="handleCustomerLogin(event)" autocomplete="off">
         <div class="form-group">
-          <label class="form-label" data-i18n="authIdentifierLabel">Mobile Number / Admin ID *</label>
+          <label class="form-label" data-i18n="authIdentifierLabel">Mobile Number *</label>
           <div style="display:flex; gap:8px;">
-            <input type="text" id="loginIdentifierInput" class="form-input" placeholder="Enter 10-digit mobile or admin ID" autocomplete="off" value="" required style="flex:1;" />
+            <input type="text" id="loginIdentifierInput" class="form-input" data-i18n-placeholder="loginIdentifierPlaceholder" placeholder="Enter 10-digit mobile number" autocomplete="off" value="" required style="flex:1;" />
           </div>
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="authPasswordLabel">Password * (Min 6 chars)</label>
           <div style="position:relative;">
-            <input type="password" id="loginPasswordInput" class="form-input" placeholder="Enter password (e.g. admin123)" minlength="6" autocomplete="new-password" value="" required style="padding-right:38px;" />
+            <input type="password" id="loginPasswordInput" class="form-input" data-i18n-placeholder="loginPasswordPlaceholder" placeholder="Enter password (at least 6 characters)" minlength="6" autocomplete="new-password" value="" required style="padding-right:38px;" />
             <button type="button" onclick="togglePasswordVisibility('loginPasswordInput', 'loginPassToggleIcon')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; font-size:14px;">
               <i class="fa-solid fa-eye" id="loginPassToggleIcon"></i>
             </button>
@@ -97,7 +97,7 @@
         <div class="form-group">
           <label class="form-label" data-i18n="authPasswordLabel">Create Password * (Min 6 chars)</label>
           <div style="position:relative;">
-            <input type="password" id="registerPasswordInput" class="form-input" placeholder="Create password (min 6 characters)" minlength="6" autocomplete="new-password" value="" required style="padding-right:38px;" />
+            <input type="password" id="registerPasswordInput" class="form-input" data-i18n-placeholder="registerPasswordPlaceholder" placeholder="Create password (at least 6 characters)" minlength="6" autocomplete="new-password" value="" required style="padding-right:38px;" />
             <button type="button" onclick="togglePasswordVisibility('registerPasswordInput', 'regPassToggleIcon')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:#64748b; cursor:pointer; font-size:14px;">
               <i class="fa-solid fa-eye" id="regPassToggleIcon"></i>
             </button>

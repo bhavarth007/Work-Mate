@@ -9,7 +9,7 @@
 const state = {
   session: null, // Logged in user session
   currentTab: "home",
-  lang: "hi", // Isolated per-user
+  lang: localStorage.getItem("workmate_selected_lang") || localStorage.getItem("workmate_default_lang") || "hi", // Preserved on refresh
   categories: [],
   services: [],
   workers: [],
@@ -63,8 +63,11 @@ const I18N = {
     navAdmin: "4 Modules",
     authLoginTab: "Login",
     authRegisterTab: "Register",
-    authIdentifierLabel: "Mobile Number / ID",
-    authPasswordLabel: "Password",
+    authIdentifierLabel: "Mobile Number *",
+    loginIdentifierPlaceholder: "Enter 10-digit mobile number",
+    authPasswordLabel: "Password * (Min 6 characters)",
+    loginPasswordPlaceholder: "Enter your password (at least 6 characters)",
+    registerPasswordPlaceholder: "Create password (at least 6 characters)",
     adminUsersHeader: "User Accounts Management",
     btnAddUser: "Add New User",
     btnSaveUser: "Save User Details",
@@ -237,8 +240,11 @@ const I18N = {
     navAdmin: "4 मॉड्यूल",
     authLoginTab: "लॉगिन",
     authRegisterTab: "पंजीकरण",
-    authIdentifierLabel: "मोबाइल नंबर / आईडी",
-    authPasswordLabel: "पासवर्ड",
+    authIdentifierLabel: "मोबाइल नंबर *",
+    loginIdentifierPlaceholder: "10-अंकों का मोबाइल नंबर दर्ज करें",
+    authPasswordLabel: "पासवर्ड * (कम से कम 6 अक्षर)",
+    loginPasswordPlaceholder: "अपना पासवर्ड दर्ज करें (कम से कम 6 अक्षर)",
+    registerPasswordPlaceholder: "नया पासवर्ड बनाएं (कम से कम 6 अक्षर)",
     adminUsersHeader: "उपयोगकर्ता खाता प्रबंधन",
     btnAddUser: "नया उपयोगकर्ता जोड़ें",
     btnSaveUser: "उपयोगकर्ता विवरण सहेजें",
@@ -466,8 +472,9 @@ function checkUserSession() {
     if (menuAdminConsole) menuAdminConsole.style.display = "none";
     if (menuDatabaseSync) menuDatabaseSync.style.display = "none";
 
-    const defaultLang = localStorage.getItem("workmate_default_lang") || "hi";
-    state.lang = defaultLang;
+    // Preserve chosen language across page refresh when logged out
+    const savedLang = localStorage.getItem("workmate_selected_lang") || localStorage.getItem("workmate_default_lang") || localStorage.getItem("workmate_lang_guest") || "hi";
+    state.lang = savedLang;
     updateLanguageUI();
     return false;
   }
@@ -731,7 +738,9 @@ function executeLogout() {
 
 function toggleLanguage() {
   state.lang = state.lang === "hi" ? "en" : "hi";
-  // Save per user key
+  // Persist language across refreshes permanently
+  localStorage.setItem("workmate_selected_lang", state.lang);
+  localStorage.setItem("workmate_default_lang", state.lang);
   const userId = state.session && state.session.user ? state.session.user.id : "guest";
   localStorage.setItem("workmate_lang_" + userId, state.lang);
 
@@ -770,9 +779,32 @@ function applyTranslations() {
     }
   });
 
+  // Translate all input placeholders dynamically
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (dict[key]) {
+      el.placeholder = dict[key];
+    }
+  });
+
   const searchInput = document.getElementById("searchInput");
   if (searchInput) {
     searchInput.placeholder = dict.searchPlaceholder;
+  }
+
+  const loginIdent = document.getElementById("loginIdentifierInput");
+  if (loginIdent && dict.loginIdentifierPlaceholder) {
+    loginIdent.placeholder = dict.loginIdentifierPlaceholder;
+  }
+
+  const loginPass = document.getElementById("loginPasswordInput");
+  if (loginPass && dict.loginPasswordPlaceholder) {
+    loginPass.placeholder = dict.loginPasswordPlaceholder;
+  }
+
+  const regPass = document.getElementById("registerPasswordInput");
+  if (regPass && dict.registerPasswordPlaceholder) {
+    regPass.placeholder = dict.registerPasswordPlaceholder;
   }
 
   const greetingEl = document.getElementById("userGreetingText");
