@@ -536,6 +536,38 @@ if os.path.isdir(WEB_APP_DIR):
     if os.path.isdir(js_dir):
         app.mount("/js", StaticFiles(directory=js_dir), name="js")
 
+    assets_dir = os.path.join(WEB_APP_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/favicon.ico")
+    def serve_favicon_ico():
+        ico_file = os.path.join(WEB_APP_DIR, "favicon.ico")
+        if os.path.exists(ico_file):
+            return FileResponse(ico_file, media_type="image/x-icon")
+        return JSONResponse(status_code=404, content={"message": "Favicon not found"})
+
+    @app.get("/favicon.png")
+    def serve_favicon_png():
+        png_file = os.path.join(WEB_APP_DIR, "favicon.png")
+        if os.path.exists(png_file):
+            return FileResponse(png_file, media_type="image/png")
+        return JSONResponse(status_code=404, content={"message": "Favicon not found"})
+
+    @app.get("/apple-touch-icon.png")
+    def serve_apple_touch_icon():
+        touch_file = os.path.join(WEB_APP_DIR, "apple-touch-icon.png")
+        if os.path.exists(touch_file):
+            return FileResponse(touch_file, media_type="image/png")
+        return JSONResponse(status_code=404, content={"message": "Apple touch icon not found"})
+
+    @app.get("/site.webmanifest")
+    def serve_site_webmanifest():
+        manifest_file = os.path.join(WEB_APP_DIR, "site.webmanifest")
+        if os.path.exists(manifest_file):
+            return FileResponse(manifest_file, media_type="application/manifest+json")
+        return JSONResponse(status_code=404, content={"message": "Manifest not found"})
+
     @app.get("/")
     def serve_frontend_root():
         index_file = os.path.join(WEB_APP_DIR, "index.html")
