@@ -61,6 +61,7 @@ class BookingCreate(BaseModel):
     location_address: str = "Flat 402, Sector 14, Noida, UP"
     lat: float = 28.6139
     lng: float = 77.2090
+    worker_id: Optional[str] = None
 
 class Booking(BaseModel):
     id: str
@@ -183,6 +184,7 @@ class CustomerRegisterRequest(BaseModel):
     address: str = Field(..., min_length=1)
     city: str = Field(..., min_length=1)
     email: Optional[str] = None
+    role: Optional[Literal["customer", "worker", "dalal"]] = "customer"
 
 class AdminUserCreateRequest(BaseModel):
     name: str = Field(..., min_length=1)

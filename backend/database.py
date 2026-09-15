@@ -456,12 +456,22 @@ def create_booking(data: Dict[str, Any]) -> Dict[str, Any]:
             }
 
         # Dynamic worker matching algorithm (Phase 3 of Photo.pdf)
-        cursor.execute("""
-            SELECT * FROM workers 
-            WHERE category_id = ? AND is_available = 1 
-            ORDER BY rating DESC LIMIT 1
-        """, (service.get("category_id", "construction"),))
-        matched_worker = cursor.fetchone()
+        # Direct worker selection or best available worker in category
+        req_worker_id = data.get("worker_id")
+        matched_worker = None
+        if req_worker_id:
+            matched_worker = cursor.execute("SELECT * FROM workers WHERE id = ? AND is_available = 1", (req_worker_id,)).fetchone()
+            if not matched_worker:
+                # If specifically requested worker is available regardless of category
+                matched_worker = cursor.execute("SELECT * FROM workers WHERE id = ?", (req_worker_id,)).fetchone()
+
+        if not matched_worker:
+            cursor.execute("""
+                SELECT * FROM workers 
+                WHERE category_id = ? AND is_available = 1 
+                ORDER BY rating DESC LIMIT 1
+            """, (service.get("category_id", "construction"),))
+            matched_worker = cursor.fetchone()
 
         if matched_worker:
             worker_dict = dict(matched_worker)
@@ -477,14 +487,14 @@ def create_booking(data: Dict[str, Any]) -> Dict[str, Any]:
             cursor.execute("UPDATE workers SET is_available = 0 WHERE id = ?", (worker_id,))
         else:
             # Fallback assigned worker
-            worker_id = "w-1"
+            worker_id = "w-101"
             worker_name = "Mukesh Verma"
             worker_photo = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
             worker_rating = 4.8
-            worker_trade = "Rajmistri (Mason)"
-            worker_trade_hi = "राजमिस्त्री"
-            worker_lat = 28.6180
-            worker_lng = 77.2140
+            worker_trade = "Bricklayer / Master Mason"
+            worker_trade_hi = "राजमिस्त्री (चिनाई)"
+            worker_lat = 21.2180
+            worker_lng = 72.8310
 
         duration = data.get("duration_hours", 4)
         base_rate = service.get("base_rate", 600.0)
@@ -809,14 +819,27 @@ def get_user_by_phone(phone: str) -> Optional[Dict[str, Any]]:
             return dict(r)
     return None
 
-def register_user(name: str, phone: str, address: str, city: str, email: Optional[str] = None, password: str = "123456") -> Dict[str, Any]:
+def register_user(name: str, phone: str, address: str, city: str, email: Optional[str] = None, password: str = "123456", role: str = "customer") -> Dict[str, Any]:
     existing = get_user_by_phone(phone)
     if existing:
         raise ValueError("A user with this mobile number is already registered.")
     uid = f"u-{uuid.uuid4().hex[:6]}"
     mem_num = random.randint(10000, 99999)
-    member_id = f"WM-USER-{mem_num}"
-    def_photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+    clean_role = (role or "customer").lower()
+    if clean_role == "worker":
+        acc_type = "Worker Partner"
+        member_id = f"WM-WRK-{mem_num}"
+        def_photo = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    elif clean_role in ["dalal", "contractor"]:
+        acc_type = "Labour Contractor / Dalal"
+        member_id = f"WM-DL-{mem_num}"
+        def_photo = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
+    else:
+        clean_role = "customer"
+        acc_type = "Customer Verified"
+        member_id = f"WM-USER-{mem_num}"
+        def_photo = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face"
+
     joined = "September 14, 2026"
     
     with _lock:
@@ -824,8 +847,8 @@ def register_user(name: str, phone: str, address: str, city: str, email: Optiona
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO users (id, name, phone, email, address, city, photo, aadhaar_masked, member_id, account_type, joined_date, trust_score, kyc_status, password, role)
-            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, 'Customer Verified', ?, 5.0, 'verified', ?, 'customer')
-        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, joined, password))
+            VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, 5.0, 'verified', ?, ?)
+        """, (uid, name, phone, email or "", address or "", city or "", def_photo, member_id, acc_type, joined, password, clean_role))
         conn.commit()
         conn.close()
         return get_user_profile(uid)

@@ -394,18 +394,20 @@ def login(payload: AuthLoginRequest):
 @app.post("/api/auth/register")
 def register(payload: CustomerRegisterRequest):
     try:
+        user_role = (payload.role or "customer").lower()
         user = register_user(
             name=payload.name.strip(),
             phone=payload.phone.strip(),
             address=(payload.address or "").strip(),
             city=(payload.city or "").strip(),
             email=(payload.email or "").strip() or None,
-            password=payload.password.strip()
+            password=payload.password.strip(),
+            role=user_role
         )
         return {
             "success": True,
             "token": f"wm_cust_token_{user['id']}",
-            "role": "customer",
+            "role": user.get("role", user_role),
             "user": user,
             "message": "Account registered successfully! Welcome to WorkMate."
         }

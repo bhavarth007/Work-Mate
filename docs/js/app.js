@@ -131,7 +131,33 @@ const I18N = {
     authCustomerRegisterTab: "Register",
     authAdminTab: "Admin",
     authPhoneLabel: "Mobile Number",
-    authLoginBtn: "Login as Customer",
+    authLoginBtn: "Login",
+    labelRegisterRole: "Account Type / Role",
+    roleCustomer: "Customer / Client",
+    roleWorker: "Worker / Mazdoor",
+    roleDalal: "Contractor / Dalal (Thekedar)",
+    allTradesTitle: "All 4 Service Modules & Trades",
+    availableWorkersTitle: "Top Rated Available Workers",
+    workerJobFeedTitle: "Available Work Feed (Instant Jobs)",
+    labelSelectWorker: "Select Available Worker (Optional)",
+    autoAssignWorker: "⭐ Auto-Assign Best Rated Available Worker",
+    statusAvailable: "Available",
+    statusWorking: "Working on Job",
+    addMoneyModalTitle: "Add Money to Wallet",
+    depositAmountLabel: "Deposit Amount (₹)",
+    selectPaymentMethodLabel: "Select Payment Mode",
+    pmUpiApps: "UPI Apps",
+    pmQrCode: "QR Code",
+    pmUpiId: "UPI ID",
+    pmNetBanking: "Net Banking",
+    scanQrInstruction: "Scan with Any UPI App (GPay, PhonePe, Paytm)",
+    qrPayAmount: "Amount:",
+    enterUpiIdLabel: "Enter Your Virtual Payment Address (UPI ID)",
+    selectBankLabel: "Select Bank",
+    sslLegalNotice: "256-Bit Bank Grade Escrow • NPCI & RBI Approved Digital Payment Gateway",
+    bookWorkerBtn: "Book Worker",
+    applyJobBtn: "Apply / Accept Job",
+    jobAcceptedSuccess: "Job accepted! Location & directions unlocked.",
     authRegisterBtn: "Register & Continue",
     adminIdLabel: "Admin ID",
     adminPasswordLabel: "Admin Password",
@@ -279,7 +305,33 @@ const I18N = {
     authCustomerRegisterTab: "नया खाता बनाएं",
     authAdminTab: "व्यवस्थापक कंसोल",
     authPhoneLabel: "मोबाइल नंबर",
-    authLoginBtn: "मोबाइल से लॉगिन करें",
+    authLoginBtn: "लॉगिन",
+    labelRegisterRole: "खाता प्रकार / भूमिका",
+    roleCustomer: "ग्राहक",
+    roleWorker: "कारीगर / मजदूर",
+    roleDalal: "ठेकेदार / दलाल",
+    allTradesTitle: "सभी 4 सेवा मॉड्यूल एवं कार्य (ट्रेड्स)",
+    availableWorkersTitle: "सर्वश्रेष्ठ उपलब्ध कारीगर व श्रमिक",
+    workerJobFeedTitle: "उपलब्ध कार्य अवसर (जॉब्स)",
+    labelSelectWorker: "उपलब्ध कारीगर चुनें (वैकल्पिक)",
+    autoAssignWorker: "⭐ सर्वश्रेष्ठ रेटिंग वाले कारीगर को स्वतः नियुक्त करें",
+    statusAvailable: "उपलब्ध",
+    statusWorking: "काम पर व्यस्त",
+    addMoneyModalTitle: "वॉलेट में पैसे जोड़ें",
+    depositAmountLabel: "जमा राशि (₹)",
+    selectPaymentMethodLabel: "भुगतान का माध्यम चुनें",
+    pmUpiApps: "यूपीआई ऐप्स",
+    pmQrCode: "क्यूआर कोड",
+    pmUpiId: "यूपीआई आईडी",
+    pmNetBanking: "नेट बैंकिंग",
+    scanQrInstruction: "किसी भी यूपीआई ऐप (GPay, PhonePe, Paytm) से स्कैन करें",
+    qrPayAmount: "राशि:",
+    enterUpiIdLabel: "अपनी यूपीआई आईडी दर्ज करें",
+    selectBankLabel: "बैंक चुनें",
+    sslLegalNotice: "256-बिट बैंक स्तरीय एस्क्रो सुरक्षा • एनपीसीआई व आरबीआई द्वारा अनुमोदित पेमेंट गेटवे",
+    bookWorkerBtn: "कारीगर चुनें",
+    applyJobBtn: "काम स्वीकार करें",
+    jobAcceptedSuccess: "कार्य स्वीकार किया गया! कार्यस्थल का पता व जीपीएस मैप उपलब्ध है।",
     authRegisterBtn: "खाता बनाएं एवं आगे बढ़ें",
     adminIdLabel: "व्यवस्थापक आईडी",
     adminPasswordLabel: "पासवर्ड",
@@ -438,10 +490,11 @@ function checkUserSession() {
     // Admin top bar is only for authenticated admin
     if (adminTopBar) adminTopBar.style.display = isAdmin ? "flex" : "none";
     
-    // Always keep 4 Modules and Database Records accessible in bottom nav and Account menu
-    if (navAdmin) navAdmin.style.display = "flex";
-    if (menuAdminConsole) menuAdminConsole.style.display = "flex";
-    if (menuDatabaseSync) menuDatabaseSync.style.display = "flex";
+    // Strictly keep 4 Modules, Admin Bar, and Database Records visible ONLY for authenticated admin
+    if (adminTopBar) adminTopBar.style.display = isAdmin ? "flex" : "none";
+    if (navAdmin) navAdmin.style.display = isAdmin ? "flex" : "none";
+    if (menuAdminConsole) menuAdminConsole.style.display = isAdmin ? "flex" : "none";
+    if (menuDatabaseSync) menuDatabaseSync.style.display = isAdmin ? "flex" : "none";
 
     if (isAdmin) {
       switchTab("admin");
@@ -599,11 +652,14 @@ async function handleCustomerRegister(event) {
     return;
   }
 
+  const roleInput = document.getElementById("registerRoleInput");
+  const role = roleInput ? roleInput.value : "customer";
+
   try {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: cleanDigits, password, address, city, email })
+      body: JSON.stringify({ name, phone: cleanDigits, password, address, city, email, role })
     });
 
     const data = await res.json();
@@ -750,18 +806,26 @@ function applyTranslations() {
   const menuLangIndicator = document.getElementById("menuLangIndicator");
   if (menuLangIndicator) menuLangIndicator.textContent = isHi ? "हिन्दी >" : "English >";
 
-  // Always display 4 Core Service Modules and Database Records in Account menu
+  // Strictly display 4 Core Service Modules and Database Records ONLY for authenticated admin
   const menuAdmin = document.getElementById("menuAdminConsoleItem");
   const menuDb = document.getElementById("menuDatabaseSyncItem");
   const navAdmin = document.getElementById("nav-admin");
-  if (menuAdmin) menuAdmin.style.display = "flex";
-  if (menuDb) menuDb.style.display = "flex";
-  if (navAdmin) navAdmin.style.display = "flex";
+  const adminTopBar = document.getElementById("adminTopBar");
+  if (menuAdmin) menuAdmin.style.display = isAdmin ? "flex" : "none";
+  if (menuDb) menuDb.style.display = isAdmin ? "flex" : "none";
+  if (navAdmin) navAdmin.style.display = isAdmin ? "flex" : "none";
+  if (adminTopBar) adminTopBar.style.display = isAdmin ? "flex" : "none";
 }
 
 // ----------------- Navigation Tabs ----------------- //
 
 function switchTab(tabId) {
+  const isAdmin = state.session && state.session.role === "admin";
+  if (tabId === "admin" && !isAdmin) {
+    showToast(state.lang === "hi" ? "व्यवस्थापक कंसोल केवल व्यवस्थापक के लिए उपलब्ध है।" : "Admin console restricted to administrators only.", "error");
+    tabId = "home";
+  }
+
   state.currentTab = tabId;
   document.querySelectorAll(".screen-view").forEach(el => el.classList.remove("active"));
   document.querySelectorAll(".nav-item-btn").forEach(el => el.classList.remove("active"));
@@ -786,6 +850,9 @@ function switchTab(tabId) {
   }
   if (tabId === "home") {
     renderCategories();
+    renderHomeTradesAccordion();
+    renderAvailableWorkers();
+    renderWorkerJobFeed();
     renderActiveBooking();
     renderReviews();
   }
@@ -1872,7 +1939,7 @@ async function renderAdminFinancials() {
 
 // ----------------- Customer Work Adding & Escrow Pay ----------------- //
 
-function openBookingForCategory(categoryId) {
+function openBookingForCategory(categoryId, targetWorkerId = null) {
   state.selectedCategoryForBooking = categoryId;
   const select = document.getElementById("bookingServiceSelect");
   if (!select) return;
@@ -1884,9 +1951,73 @@ function openBookingForCategory(categoryId) {
     <option value="${s.id}">${isHi ? s.name_hi : s.name_en} (₹${s.base_rate}/${s.unit === 'per_day' ? (isHi ? 'दिन' : 'day') : (isHi ? 'घंटा' : 'hour')})</option>
   `).join("");
 
+  syncServiceWorkerOptions(targetWorkerId);
   syncModalBookingAdminBox();
   updateEstimatedPrice();
   document.getElementById("modalBooking").classList.add("active");
+}
+
+function syncServiceWorkerOptions(preSelectedWorkerId = null) {
+  const workerSelect = document.getElementById("bookingWorkerSelect");
+  if (!workerSelect) return;
+  const isHi = state.lang === "hi";
+
+  const busyWorkerIds = new Set(
+    (state.bookings || [])
+      .filter(b => b.status === "in_progress" || b.status === "upcoming")
+      .map(b => b.worker_id)
+      .filter(Boolean)
+  );
+
+  let optsHtml = `<option value="">${isHi ? "⭐ सर्वश्रेष्ठ रेटिंग वाले कारीगर को स्वतः नियुक्त करें" : "⭐ Auto-Assign Best Rated Available Worker"}</option>`;
+  
+  (state.workers || []).forEach(w => {
+    const isBusy = busyWorkerIds.has(w.id);
+    const tradeName = isHi ? (w.primary_trade_hi || w.primary_trade) : w.primary_trade;
+    const statusText = isBusy 
+      ? (isHi ? "🟡 काम पर व्यस्त" : "🟡 Working / Busy") 
+      : (isHi ? "🟢 उपलब्ध" : "🟢 Available");
+    
+    const disabledAttr = isBusy ? "disabled" : "";
+    optsHtml += `<option value="${w.id}" ${disabledAttr} data-trade="${tradeName}" data-rate="${w.daily_rate}">
+      ${w.name} - ${tradeName} (${statusText} • ⭐${w.rating})
+    </option>`;
+  });
+
+  workerSelect.innerHTML = optsHtml;
+  if (preSelectedWorkerId) {
+    workerSelect.value = preSelectedWorkerId;
+  }
+  handleBookingWorkerChange();
+}
+
+function handleBookingWorkerChange() {
+  const workerSelect = document.getElementById("bookingWorkerSelect");
+  const preview = document.getElementById("bookingSelectedWorkerInfo");
+  if (!workerSelect || !preview) return;
+
+  const val = workerSelect.value;
+  const isHi = state.lang === "hi";
+  if (!val) {
+    preview.style.display = "none";
+    return;
+  }
+
+  const worker = (state.workers || []).find(w => w.id === val);
+  if (worker) {
+    preview.style.display = "block";
+    preview.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${worker.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #10b981;" />
+        <div style="flex:1;">
+          <div style="font-weight:700; color:#1e293b;">${worker.name} <span style="color:#059669; font-size:11px;">✓ ${isHi ? "सत्यापित कारीगर" : "Verified Worker"}</span></div>
+          <div style="font-size:11px; color:#475569;">${isHi ? (worker.primary_trade_hi || worker.primary_trade) : worker.primary_trade} • ⭐ ${worker.rating} • ₹${worker.daily_rate}/${isHi ? 'दिन' : 'day'}</div>
+        </div>
+      </div>
+    `;
+  } else {
+    preview.style.display = "none";
+  }
 }
 
 function syncModalBookingAdminBox() {
@@ -1969,10 +2100,14 @@ async function submitBooking(event) {
     ? (isCustomOffer ? `${notes} (Offered Rate: ₹${customOfferVal})` : notes)
     : (isCustomOffer ? `Client Offered Budget: ₹${customOfferVal}/shift` : (isHi ? "कुशल लेबर की तत्काल आवश्यकता" : "Immediate requirement matching trade standards"));
 
+  const workerSelect = document.getElementById("bookingWorkerSelect");
+  const selectedWorkerId = workerSelect ? workerSelect.value : "";
+
   const payload = {
     customer_name: state.session && state.session.user ? state.session.user.name : state.userProfile.name,
     customer_phone: state.session && state.session.user ? state.session.user.phone : state.userProfile.phone,
     service_id: serviceId,
+    worker_id: selectedWorkerId || null,
     task_description: descNote,
     booking_type: bookingType,
     duration_hours: duration,
@@ -2078,36 +2213,412 @@ async function triggerCompleteJob(bookingId) {
 
 // ----------------- Wallet Operations ----------------- //
 
+
+// ----------------- All 20 Trades Accordion (All 4 Modules) ----------------- //
+
+function renderHomeTradesAccordion() {
+  const container = document.getElementById("homeTradesAccordion");
+  if (!container) return;
+  const isHi = state.lang === "hi";
+
+  const categories = state.categories || [];
+  const services = state.services || [];
+
+  container.innerHTML = categories.map((cat, idx) => {
+    const catServices = services.filter(s => s.category_id === cat.id);
+    const catTitle = isHi ? cat.name_hi : cat.name_en;
+    let icon = "fa-trowel-bricks";
+    if (cat.id === "events") icon = "fa-champagne-glasses";
+    if (cat.id === "shifting") icon = "fa-truck-ramp-box";
+    if (cat.id === "textile") icon = "fa-scissors";
+
+    const tradesListHtml = catServices.map(s => {
+      const sTitle = isHi ? s.name_hi : s.name_en;
+      const sDesc = isHi ? s.desc_hi : s.desc_en;
+      const unitLabel = s.unit === "per_day" ? (isHi ? "दिन" : "day") : (isHi ? "घंटा" : "hour");
+      return `
+        <div class="trade-item-row" onclick="openBookingForTrade('${s.id}', '${cat.id}')">
+          <div style="flex:1;">
+            <div style="font-weight:700; font-size:13px; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <span>${sTitle}</span>
+              ${s.popular ? `<span style="background:#eff6ff; color:#1d4ed8; font-size:10px; padding:1px 6px; border-radius:4px; font-weight:600;">★ ${isHi ? 'लोकप्रिय' : 'Popular'}</span>` : ''}
+            </div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px; line-height:1.3;">${sDesc}</div>
+          </div>
+          <div style="text-align:right; margin-left:12px; min-width:85px;">
+            <div style="font-size:14px; font-weight:800; color:#1d4ed8;">₹${s.base_rate}</div>
+            <div style="font-size:10px; color:#64748b;">/${unitLabel}</div>
+            <button type="button" class="btn-book-trade-mini" style="margin-top:4px; font-size:11px; padding:3px 8px; border-radius:6px; background:#1d4ed8; color:#fff; border:none; cursor:pointer; font-weight:700;">
+              ${isHi ? 'बुक करें' : 'Book'}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="home-cat-accordion-card">
+        <div class="home-cat-accordion-header" onclick="toggleHomeModuleAccordion('${cat.id}')">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="home-cat-acc-icon" style="background:${cat.color || '#dbeafe'}; color:${cat.textColor || '#1d4ed8'};">
+              <i class="fa-solid ${icon}"></i>
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:14px; color:#0f172a;">${catTitle}</div>
+              <div style="font-size:11px; color:#64748b;">${catServices.length} ${isHi ? 'प्रमाणित ट्रेड्स' : 'Verified Trades'}</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down" id="accIcon-${cat.id}" style="color:#64748b; font-size:12px; transition:transform 0.2s; ${idx === 0 ? 'transform:rotate(180deg);' : ''}"></i>
+        </div>
+        <div class="home-cat-accordion-body" id="accBody-${cat.id}" style="${idx === 0 ? 'display:block;' : 'display:none;'}">
+          ${tradesListHtml}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleHomeModuleAccordion(catId) {
+  const body = document.getElementById(`accBody-${catId}`);
+  const icon = document.getElementById(`accIcon-${catId}`);
+  if (!body) return;
+  const isHidden = body.style.display === "none";
+  body.style.display = isHidden ? "block" : "none";
+  if (icon) {
+    icon.style.transform = isHidden ? "rotate(180deg)" : "rotate(0deg)";
+  }
+}
+
+function openBookingForTrade(serviceId, categoryId) {
+  openBookingForCategory(categoryId);
+  const select = document.getElementById("bookingServiceSelect");
+  if (select) {
+    select.value = serviceId;
+    syncModalBookingAdminBox();
+    updateEstimatedPrice();
+  }
+}
+
+// ----------------- Top Available Workers with Status Badges ----------------- //
+
+function renderAvailableWorkers() {
+  const grid = document.getElementById("availableWorkersGrid");
+  if (!grid) return;
+  const isHi = state.lang === "hi";
+
+  const busyWorkerIds = new Set(
+    (state.bookings || [])
+      .filter(b => b.status === "in_progress" || b.status === "upcoming")
+      .map(b => b.worker_id)
+      .filter(Boolean)
+  );
+
+  const workers = state.workers || [];
+  if (!workers.length) {
+    grid.innerHTML = `<div style="font-size:12px; color:#64748b; padding:12px;">${isHi ? "कोई कारीगर विवरण उपलब्ध नहीं है।" : "No worker profiles available."}</div>`;
+    return;
+  }
+
+  grid.innerHTML = workers.map(w => {
+    const isBusy = busyWorkerIds.has(w.id);
+    const trade = isHi ? (w.primary_trade_hi || w.primary_trade) : w.primary_trade;
+    const statusDot = isBusy ? "🟡" : "🟢";
+    const statusLabel = isBusy 
+      ? (isHi ? "काम पर व्यस्त" : "Working / Busy") 
+      : (isHi ? "उपलब्ध" : "Available");
+    const statusBg = isBusy ? "#fef3c7" : "#dcfce7";
+    const statusColor = isBusy ? "#b45309" : "#15803d";
+
+    const bookBtn = isBusy 
+      ? `<button type="button" class="btn-worker-book disabled" style="opacity:0.6; cursor:not-allowed; background:#e2e8f0; color:#64748b;" title="${isHi ? 'यह कारीगर वर्तमान में काम पर व्यस्त है' : 'Worker currently on active job'}">
+          <i class="fa-solid fa-clock"></i> ${isHi ? "व्यस्त" : "Busy"}
+        </button>`
+      : `<button type="button" class="btn-worker-book" onclick="bookSpecificWorker('${w.id}', '${w.category_id || 'construction'}')">
+          <i class="fa-solid fa-calendar-check"></i> ${isHi ? "कारीगर चुनें" : "Book Worker"}
+        </button>`;
+
+    return `
+      <div class="worker-card ${isBusy ? 'worker-busy' : 'worker-available'}">
+        <div class="worker-card-header">
+          <div style="position:relative;">
+            <img src="${w.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}" class="worker-photo" alt="${w.name}" />
+            <div class="worker-live-status-dot" style="position:absolute; bottom:2px; right:2px; width:12px; height:12px; border-radius:50%; background:${isBusy ? '#f59e0b' : '#10b981'}; border:2px solid #fff;"></div>
+          </div>
+          <div class="worker-header-details">
+            <h4 class="worker-name">${w.name}</h4>
+            <div class="worker-trade-tag">${trade}</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+              <span class="worker-rating-badge"><i class="fa-solid fa-star"></i> ${w.rating}</span>
+              <span style="font-size:11px; color:#64748b;">(${w.reviews_count || 120} ${isHi ? 'समीक्षा' : 'reviews'})</span>
+            </div>
+          </div>
+        </div>
+        <div class="worker-card-footer">
+          <div style="display:flex; flex-direction:column;">
+            <span style="font-size:11px; color:#64748b;">${isHi ? "दैनिक दर" : "Daily Wage"}</span>
+            <span style="font-weight:800; color:#1e3a8a; font-size:15px;">₹${w.daily_rate}<span style="font-size:11px; font-weight:500; color:#64748b;">/${isHi ? 'दिन' : 'day'}</span></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="worker-status-badge" style="background:${statusBg}; color:${statusColor}; font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px;">
+              ${statusDot} ${statusLabel}
+            </span>
+            ${bookBtn}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function bookSpecificWorker(workerId, categoryId) {
+  openBookingForCategory(categoryId, workerId);
+}
+
+// ----------------- Worker Job Portal (When Logged in as Worker) ----------------- //
+
+function renderWorkerJobFeed() {
+  const section = document.getElementById("workerJobFeedSection");
+  const list = document.getElementById("workerJobsList");
+  if (!section || !list) return;
+
+  const isWorker = state.session && state.session.role === "worker";
+  section.style.display = isWorker ? "block" : "none";
+  if (!isWorker) return;
+
+  const isHi = state.lang === "hi";
+  const availableJobs = (state.bookings || []).filter(b => b.status === "in_progress" || b.status === "upcoming" || b.status === "open");
+
+  if (!availableJobs.length) {
+    list.innerHTML = `<div style="font-size:12px; color:#64748b; padding:12px; text-align:center;">${isHi ? "वर्तमान में आपके क्षेत्र में कोई नया कार्य अनुरोध नहीं है।" : "No pending work requests currently in your vicinity."}</div>`;
+    return;
+  }
+
+  list.innerHTML = availableJobs.slice(0, 4).map(b => `
+    <div class="worker-job-feed-card">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <span style="font-size:10px; background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:10px; font-weight:700;">#${b.booking_number || b.id}</span>
+          <h4 style="font-size:14px; font-weight:700; color:#0f172a; margin-top:4px;">${isHi ? (b.service_name_hi || b.service_name) : b.service_name}</h4>
+          <p style="font-size:11px; color:#64748b; margin-top:2px;"><i class="fa-solid fa-location-dot"></i> ${b.location_address || 'Surat, Gujarat'}</p>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:15px; font-weight:800; color:#059669;">₹${b.total_cost}</div>
+          <div style="font-size:10px; color:#64748b;">${b.duration_hours || 8} ${isHi ? 'घंटे' : 'Hours'}</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px dashed #e2e8f0; padding-top:8px;">
+        <span style="font-size:11px; color:#475569;"><i class="fa-solid fa-user"></i> ${b.customer_name || 'Client'}</span>
+        <button type="button" class="btn-worker-accept-job" onclick="acceptJobAsWorker('${b.id}')" style="background:#15803d; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">
+          <i class="fa-solid fa-circle-check"></i> ${isHi ? 'काम स्वीकार करें' : 'Accept Work'}
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function acceptJobAsWorker(bookingId) {
+  const isHi = state.lang === "hi";
+  showToast(isHi ? "कार्य स्वीकार किया गया! ग्राहक का लोकेशन व मैप अनलॉक हो चुका है।" : "Job accepted! Customer site location & GPS unlocked.", "success");
+  openLiveTrackingModal(bookingId);
+}
+
+// ----------------- Real Multi-Method Payment System & Dynamic QR ----------------- //
+
+let currentPaymentMode = "upi_apps";
+let paymentQrInstance = null;
+
 function openAddMoneyModal() {
   document.getElementById("modalAddMoney").classList.add("active");
+  switchPaymentMode("upi_apps");
+  updateAddMoneyBtnText();
+}
+
+function switchPaymentMode(mode) {
+  currentPaymentMode = mode;
+  document.querySelectorAll(".pm-tab-btn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".pm-content-pane").forEach(pane => {
+    pane.classList.remove("active");
+    pane.style.display = "none";
+  });
+
+  const tabMap = {
+    'upi_apps': 'pmTabUpiApps',
+    'qr': 'pmTabQr',
+    'upi_id': 'pmTabUpiId',
+    'netbanking': 'pmTabNetBanking'
+  };
+  const paneMap = {
+    'upi_apps': 'payModeUpiApps',
+    'qr': 'payModeQr',
+    'upi_id': 'payModeUpiId',
+    'netbanking': 'payModeNetBanking'
+  };
+
+  const tabBtn = document.getElementById(tabMap[mode]);
+  const pane = document.getElementById(paneMap[mode]);
+
+  if (tabBtn) tabBtn.classList.add("active");
+  if (pane) {
+    pane.classList.add("active");
+    pane.style.display = "block";
+  }
+
+  updateAddMoneyBtnText();
+
+  if (mode === "qr") {
+    generatePaymentQr();
+  }
+}
+
+function selectUpiApp(el, appName) {
+  document.querySelectorAll(".upi-app-option").forEach(opt => opt.classList.remove("active"));
+  el.classList.add("active");
+  const hiddenInput = document.getElementById("selectedUpiAppInput");
+  if (hiddenInput) hiddenInput.value = appName;
+  updateAddMoneyBtnText();
+}
+
+function onAddMoneyAmountChange() {
+  const amtInput = document.getElementById("addMoneyAmount");
+  const amt = parseFloat(amtInput ? amtInput.value : 2000) || 0;
+  const qrBadge = document.getElementById("qrAmountBadgeText");
+  if (qrBadge) qrBadge.textContent = `₹${amt.toLocaleString('en-IN')}`;
+  updateAddMoneyBtnText();
+  if (currentPaymentMode === "qr") {
+    generatePaymentQr();
+  }
 }
 
 function setAddAmount(val) {
-  document.getElementById("addMoneyAmount").value = val;
+  const amtInput = document.getElementById("addMoneyAmount");
+  if (amtInput) {
+    amtInput.value = val;
+    onAddMoneyAmountChange();
+  }
 }
 
-async function submitAddMoney(event) {
-  event.preventDefault();
+function updateAddMoneyBtnText() {
+  const btnText = document.getElementById("addMoneySubmitBtnText");
+  const amtInput = document.getElementById("addMoneyAmount");
+  if (!btnText || !amtInput) return;
+  const amt = parseFloat(amtInput.value) || 0;
+  const formattedAmt = `₹${amt.toLocaleString('en-IN')}`;
+  const isHi = state.lang === "hi";
+
+  if (currentPaymentMode === "upi_apps") {
+    const appInput = document.getElementById("selectedUpiAppInput");
+    const app = appInput ? appInput.value : "Google Pay";
+    btnText.textContent = isHi ? `${app} से ${formattedAmt} सुरक्षित भुगतान करें` : `Pay ${formattedAmt} Securely via ${app}`;
+  } else if (currentPaymentMode === "qr") {
+    btnText.textContent = isHi ? `क्यूआर कोड से ${formattedAmt} भुगतान पुष्टि करें` : `Confirm QR Payment of ${formattedAmt}`;
+  } else if (currentPaymentMode === "upi_id") {
+    btnText.textContent = isHi ? `यूपीआई रिक्वेस्ट भेजें (${formattedAmt})` : `Send Payment Request (${formattedAmt})`;
+  } else if (currentPaymentMode === "netbanking") {
+    const bankSelect = document.getElementById("netBankingSelect");
+    const bank = bankSelect ? bankSelect.value : "Net Banking";
+    btnText.textContent = isHi ? `${bank} नेट बैंकिंग से ${formattedAmt} भुगतान करें` : `Pay ${formattedAmt} via ${bank} Net Banking`;
+  }
+}
+
+function generatePaymentQr() {
+  const wrapper = document.getElementById("dynamicQrCanvasWrapper");
+  const amtInput = document.getElementById("addMoneyAmount");
+  if (!wrapper || !amtInput) return;
+
+  const amt = parseFloat(amtInput.value) || 2000;
+  const upiUrl = `upi://pay?pa=workmate.pay@hdfcbank&pn=WorkMate&am=${amt}&cu=INR&tn=WorkMate_Wallet_Deposit`;
+
+  wrapper.innerHTML = "";
+  try {
+    if (typeof QRCode !== "undefined") {
+      paymentQrInstance = new QRCode(wrapper, {
+        text: upiUrl,
+        width: 160,
+        height: 160,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      wrapper.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}" style="width:160px; height:160px;" alt="UPI QR" />`;
+    }
+  } catch (e) {
+    wrapper.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}" style="width:160px; height:160px;" alt="UPI QR" />`;
+  }
+}
+
+async function submitRealPayment(event) {
+  if (event) event.preventDefault();
   const isHi = state.lang === "hi";
   const amount = parseFloat(document.getElementById("addMoneyAmount").value);
-  const method = document.getElementById("addMoneyMethod").value;
 
   if (isNaN(amount) || amount <= 0) {
     showToast(isHi ? "कृपया मान्य राशि दर्ज करें" : "Please enter a valid amount", "error");
     return;
   }
 
+  let method = "UPI";
+  let upiId = "workmate.pay@hdfcbank";
+  let bankName = "";
+
+  if (currentPaymentMode === "upi_apps") {
+    const app = document.getElementById("selectedUpiAppInput") ? document.getElementById("selectedUpiAppInput").value : "Google Pay";
+    method = `UPI (${app})`;
+    upiId = `user@${app.toLowerCase().replace(/\s+/g, '')}`;
+  } else if (currentPaymentMode === "qr") {
+    method = "UPI QR Scan";
+    upiId = "workmate.pay@hdfcbank";
+  } else if (currentPaymentMode === "upi_id") {
+    const customUpi = document.getElementById("customUpiIdInput");
+    upiId = customUpi ? customUpi.value.trim() : "ramesh@okhdfcbank";
+    method = `UPI (${upiId})`;
+  } else if (currentPaymentMode === "netbanking") {
+    const bankSelect = document.getElementById("netBankingSelect");
+    bankName = bankSelect ? bankSelect.value : "HDFC Bank";
+    method = `Net Banking (${bankName})`;
+  }
+
+  const submitBtn = document.getElementById("btnSubmitAddMoney");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${isHi ? 'प्रमाणीकरण जारी है...' : 'Authorizing Bank Gateway...'}`;
+  }
+
   try {
-    if (typeof handleAddMoney === "function") {
-      await handleAddMoney(amount, method);
-    }
+    const res = await fetch("/api/wallet/deposit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: amount,
+        method: method,
+        upi_id: upiId,
+        bank_name: bankName
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Payment failed");
+
     closeModal("modalAddMoney");
-    showToast(isHi ? `वॉलेट में ₹${amount.toLocaleString('en-IN')} जोड़े गए!` : `Added ₹${amount.toLocaleString('en-IN')} to WorkMate Wallet!`, "success");
+    showToast(
+      isHi 
+        ? `₹${amount.toLocaleString('en-IN')} सफलतापूर्वक वॉलेट में जमा किए गए! (${method})` 
+        : `₹${amount.toLocaleString('en-IN')} successfully added to Wallet via ${method}!`, 
+      "success"
+    );
+
     await loadInitialData();
+    switchTab("payments");
   } catch (err) {
     showToast(err.message, "error");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      updateAddMoneyBtnText();
+    }
   }
 }
+
 
 // ----------------- Reviews ----------------- //
 
